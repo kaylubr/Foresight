@@ -4,6 +4,7 @@ import { join } from "node:path";
 import express from "express";
 import type { ConnectRequest, HealthResult, HistoryEntry, PreviewRequest, StalenessRequest } from "../shared/types";
 import { checkStaleness, connectRepo, currentDenialProbe, previewCommand } from "./pipeline";
+import { sweepOrphanedMirrors } from "./mirror";
 
 const PORT = Number(process.env.PORT ?? 4317);
 const HISTORY_LIMIT = 100;
@@ -100,6 +101,11 @@ if (existsSync(webRoot)) {
   app.get("*", (_request, response) => {
     response.sendFile(join(webRoot, "index.html"));
   });
+}
+
+const swept = await sweepOrphanedMirrors();
+if (swept > 0) {
+  console.log(`Removed ${swept} orphaned rehearsal clone(s) left by a previous run.`);
 }
 
 app.listen(PORT, () => {

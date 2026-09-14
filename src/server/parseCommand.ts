@@ -1,9 +1,8 @@
 import type { AliasEntry } from "./config";
 import {
   ALLOWED_GLOBAL_FLAGS,
-  ALLOWED_SUBCOMMANDS,
+  READ_ONLY_SUBCOMMANDS,
   REFUSED_GLOBAL_OPTIONS,
-  REFUSED_SUBCOMMANDS,
   configKeyIsAllowed,
   configKeyRefusal
 } from "./allowlist";
@@ -210,30 +209,12 @@ export function parseGitArgv(args: string[]): ParseOutcome {
     return refusal("missing-subcommand", "no git subcommand was given", "for example `git status`");
   }
 
-  const refusedCommand = REFUSED_SUBCOMMANDS[subcommand];
-  if (refusedCommand) {
-    return refusal(
-      `refused-${subcommand}`,
-      `\`git ${subcommand}\` is not previewable because ${refusedCommand.reason}`,
-      refusedCommand.alternative
-    );
-  }
-
-  const kind = ALLOWED_SUBCOMMANDS[subcommand];
-  if (!kind) {
-    return refusal(
-      "not-allowlisted",
-      `\`git ${subcommand}\` is not on the allowlist: only commands whose effect lands in Modelled state are previewable`,
-      null
-    );
-  }
-
   return {
     ok: true,
     command: {
       argv: args,
       subcommand,
-      kind,
+      kind: READ_ONLY_SUBCOMMANDS.has(subcommand) ? "read-only" : "mutator",
       subArgs: args.slice(index + 1),
       configOverrides
     }

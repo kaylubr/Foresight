@@ -29,6 +29,7 @@ export interface CommitNode {
 
 export interface GraphData {
   commits: CommitNode[];
+  head: HeadState | null;
 }
 
 export interface RefChange {
@@ -139,8 +140,11 @@ export interface OutcomeBase {
   display: string;
   args: string[] | null;
   changeSet: ChangeSet | null;
+  graphBefore: GraphData | null;
+  graphAfter: GraphData | null;
   sideEffects: SideEffectBadge[];
   blockingAnomaly: boolean;
+  fidelityWarnings: string[];
   caveats: Caveat[];
   originSnapshot: OriginSnapshot | null;
   stdout: string;
@@ -167,6 +171,7 @@ export interface PauseStopOutcome extends OutcomeBase {
 export interface FailureOutcome extends OutcomeBase {
   kind: "failure";
   exitCode: number;
+  explanation: string | null;
 }
 
 export interface RefusalOutcome extends OutcomeBase {

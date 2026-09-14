@@ -1,4 +1,4 @@
-import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, readlink, rm, symlink, writeFile } from "node:fs/promises";
+import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, readdir, readlink, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import type { ModelledState } from "../shared/types";
@@ -7,15 +7,37 @@ import { readEnv, readGit, runGit, splitNul } from "./git";
 import { resolveGitDir } from "./repoState";
 
 export const DEAD_ORIGIN = "/foresight/dead-remote";
+export const MIRROR_PREFIX = "foresight-";
+const MAX_MIRRORED_UNTRACKED_FILES = 5000;
 
 export function cloneArguments(originPath: string, clonePath: string): string[] {
   return ["clone", "--quiet", originPath, clonePath];
+}
+
+export async function sweepOrphanedMirrors(): Promise<number> {
+  const temporary = tmpdir();
+  const entries = await readdir(temporary, { withFileTypes: true }).catch(() => []);
+  let removed = 0;
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !entry.name.startsWith(MIRROR_PREFIX)) {
+      continue;
+    }
+    const target = join(temporary, entry.name);
+    try {
+      await rm(target, { recursive: true, force: true });
+      removed += 1;
+    } catch {
+      continue;
+    }
+  }
+  return removed;
 }
 
 export interface Mirror {
   root: string;
   path: string;
   homeDir: string;
+  warnings: string[];
   dispose: () => Promise<void>;
 }
 
@@ -65,10 +87,15 @@ async function mirrorStash(originPath: string, clonePath: string, state: Modelle
   }
 }
 
-export async function createMirror(originPath: string, originState: ModelledState): Promise<Mirror> {
-  const root = await mkdtemp(join(tmpdir(), "foresight-"));
+export async function createMirror(
+  originPath: string,
+  originState: ModelledState,
+  options: { includeIgnored: boolean } = { includeIgnored: false }
+): Promise<Mirror> {
+  const root = await mkdtemp(join(tmpdir(), MIRROR_PREFIX));
   const clonePath = join(root, "clone");
   const homeDir = join(root, "home");
+  const warnings: string[] = [];
   await mkdir(homeDir, { recursive: true });
 
   const env = readEnv({ GIT_CONFIG_NOSYSTEM: "1", GIT_TERMINAL_PROMPT: "0" });
@@ -130,7 +157,27 @@ export async function createMirror(originPath: string, originState: ModelledStat
     await copyWorktreeChange(originPath, clonePath, relativePath);
   }
 
+  const untracked = await readGit(["ls-files", "--others", "--exclude-standard", "-z"], originPath);
+  const unmirrored = splitNul(untracked.stdout).sort();
+
+  if (options.includeIgnored) {
+    const ignored = await readGit(
+      ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
+      originPath
+    );
+    unmirrored.push(...splitNul(ignored.stdout).sort());
+  }
+
+  if (unmirrored.length > MAX_MIRRORED_UNTRACKED_FILES) {
+    warnings.push(
+      `This repository has ${unmirrored.length} untracked or ignored files. Foresight mirrored the first ${MAX_MIRRORED_UNTRACKED_FILES}, so a command that acts on the rest is not fully represented.`
+    );
+  }
+  for (const relativePath of unmirrored.slice(0, MAX_MIRRORED_UNTRACKED_FILES)) {
+    await copyWorktreeChange(originPath, clonePath, relativePath);
+  }
+
   await mirrorStash(originPath, clonePath, originState);
 
-  return { root, path: clonePath, homeDir, dispose };
+  return { root, path: clonePath, homeDir, warnings, dispose };
 }

@@ -1,20 +1,10 @@
 import type { Caveat } from "./types";
 
 export const CAVEAT_CATALOG: Record<string, { label: string; detail: string }> = {
-  "untracked-not-mirrored": {
-    label: "Untracked files are not mirrored",
-    detail:
-      "The rehearsal cannot see untracked files, so commands that would act on them are refused rather than previewed."
-  },
-  "ignored-not-mirrored": {
-    label: "Ignored files are not mirrored",
-    detail:
-      "Ignored files are left out of the rehearsal, so a command that would overwrite them is refused."
-  },
   "sanitized-environment": {
     label: "The environment is sanitized",
     detail:
-      "The rehearsal runs with a controlled git environment and no network, so a command that would fail for real — a missing credential, a hook — can succeed here, and vice versa."
+      "The rehearsal runs with a controlled git environment and no network, so a command that would fail for real (a missing credential, a hook) can succeed here, and vice versa."
   },
   "origin-topology": {
     label: "origin is not your real remote",

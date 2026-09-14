@@ -41,17 +41,3 @@ export async function readDynamicDisqualifiers(repoPath: string): Promise<Dynami
   }
   return { operation: null };
 }
-
-export function describeStaticDisqualifiers(value: StaticDisqualifiers): string[] {
-  const reasons: string[] = [];
-  if (value.submodules) {
-    reasons.push("it has submodules, which are not cloned and would re-share objects with the original");
-  }
-  if (value.lfs) {
-    reasons.push("it uses Git LFS, whose files live outside the object store and can fetch over the network");
-  }
-  if (value.linkedWorktrees > 0) {
-    reasons.push("it has linked worktrees, which are not copied into the mirror");
-  }
-  return reasons;
-}

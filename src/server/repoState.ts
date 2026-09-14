@@ -200,10 +200,21 @@ export async function readReachableCommits(repoPath: string, limit = 2000): Prom
 
 export async function readGraph(repoPath: string, limit = 400): Promise<GraphData> {
   const format = "%H%x1f%P%x1f%an%x1f%aI%x1f%s%x1f%D%x1e";
-  const output = await readGitOk(
-    ["log", "--all", "--date-order", `--max-count=${limit}`, `--format=${format}`],
-    repoPath
-  );
+  const [head, output] = await Promise.all([
+    readHead(repoPath),
+    readGitOk(
+      [
+        "log",
+        "--branches",
+        "--tags",
+        "HEAD",
+        "--date-order",
+        `--max-count=${limit}`,
+        `--format=${format}`
+      ],
+      repoPath
+    )
+  ]);
   const commits: CommitNode[] = output
     .split("\u001e")
     .map((record) => record.trim())
@@ -222,5 +233,5 @@ export async function readGraph(repoPath: string, limit = 400): Promise<GraphDat
           .filter((ref) => ref.length > 0)
       };
     });
-  return { commits };
+  return { commits, head };
 }
