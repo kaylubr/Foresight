@@ -57,21 +57,17 @@ describe("prepareCommand", () => {
     expect(refusalCode("ls -la")).toBe("not-git");
   });
 
-  it("refuses remote-touching commands", () => {
-    expect(refusalCode("git push origin main")).toBe("refused-push");
-    expect(refusalCode("git fetch")).toBe("refused-fetch");
-  });
-
-  it("refuses object-store maintenance", () => {
-    expect(refusalCode("git gc")).toBe("refused-gc");
-    expect(refusalCode("git repack -ad")).toBe("refused-repack");
-    expect(refusalCode("git config user.name x")).toBe("refused-config");
-  });
-
-  it("refuses commands outside the allowlist", () => {
-    expect(refusalCode("git clean -fd")).toBe("refused-clean");
-    expect(refusalCode("git bisect start")).toBe("refused-bisect");
-    expect(refusalCode("git worktree add x")).toBe("refused-worktree");
+  it("accepts any git subcommand, including ones that were previously refused", () => {
+    expect(parse("git push origin main").subcommand).toBe("push");
+    expect(parse("git fetch").subcommand).toBe("fetch");
+    expect(parse("git gc").subcommand).toBe("gc");
+    expect(parse("git repack -ad").subcommand).toBe("repack");
+    expect(parse("git config user.name x").subcommand).toBe("config");
+    expect(parse("git clean -fd").subcommand).toBe("clean");
+    expect(parse("git bisect start").subcommand).toBe("bisect");
+    expect(parse("git worktree add x").subcommand).toBe("worktree");
+    expect(parse("git update-ref refs/heads/x HEAD").subcommand).toBe("update-ref");
+    expect(parse("git fsck").subcommand).toBe("fsck");
   });
 
   it("allows read-only and porcelain commands", () => {
@@ -86,9 +82,12 @@ describe("prepareCommand", () => {
     expect(refusalCode("git -c filter.x.clean=rm status")).toBe("config-key");
   });
 
-  it("allows data-only -c keys and records them", () => {
-    const command = parse("git -c user.name=Alice status");
-    expect(command.configOverrides).toEqual([{ key: "user.name", value: "Alice" }]);
+  it("allows any -c key that does not name a program, and records them", () => {
+    const command = parse("git -c user.name=Alice -c diff.colorMoved=zebra status");
+    expect(command.configOverrides).toEqual([
+      { key: "user.name", value: "Alice" },
+      { key: "diff.colorMoved", value: "zebra" }
+    ]);
   });
 
   it("refuses global options that would escape the mirror", () => {

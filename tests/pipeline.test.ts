@@ -62,15 +62,17 @@ describe("pipeline integration", () => {
     expect(connected.dynamicDisqualifiers.operation).toBeNull();
   });
 
-  it("refuses a command that would act on untracked files", async () => {
+  it("mirrors untracked files so a staging command is represented", async () => {
+    if (!sandboxReady) {
+      return;
+    }
     const repo = makeRepo();
     const outcome = await previewCommand({ path: repo, command: "git add -A" });
-    expect(outcome.kind).toBe("refusal");
-    if (outcome.kind === "refusal") {
-      expect(outcome.code).toBe("untracked-add");
-      expect(outcome.changeSet).toBeNull();
+    expect(outcome.kind).toBe("preview");
+    if (outcome.kind === "preview") {
+      expect(outcome.changeSet?.staged.some((change) => change.path === "untracked.txt")).toBe(true);
     }
-  });
+  }, 120_000);
 
   it("refuses a shell line without executing it", async () => {
     const repo = makeRepo();
@@ -78,7 +80,7 @@ describe("pipeline integration", () => {
     expect(outcome.kind).toBe("refusal");
   });
 
-  it("refuses a repository that is mid-operation", async () => {
+  it("warns instead of refusing when the repository is mid-operation", async () => {
     const repo = makeRepo();
     settle(repo);
     git(repo, ["checkout", "-qb", "other"]);
@@ -95,10 +97,8 @@ describe("pipeline integration", () => {
       // expected to stop on a conflict
     }
     const outcome = await previewCommand({ path: repo, command: "git status" });
-    expect(outcome.kind).toBe("refusal");
-    if (outcome.kind === "refusal") {
-      expect(outcome.code).toBe("mid-operation");
-    }
+    expect(outcome.kind).not.toBe("refusal");
+    expect(outcome.fidelityWarnings.some((warning) => warning.includes("rebase"))).toBe(true);
   }, 60_000);
 
   it("previews a commit faithfully against a mirrored dirty worktree", async () => {

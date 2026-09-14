@@ -10,89 +10,72 @@ function guard(input: string, context: Partial<GuardContext> = {}): GuardResult 
   if (!parsed.ok) {
     throw new Error(`parse failed: ${parsed.reason}`);
   }
-  return evaluateGuards(parsed.command, {
-    untracked: [],
-    ignored: [],
-    sequence: null,
-    ...context
-  });
+  return evaluateGuards(parsed.command, { sequence: null, ...context });
 }
 
-describe("untracked and ignored gate", () => {
-  it("refuses add -A when untracked files exist", () => {
-    const result = guard("git add -A", { untracked: ["u.txt"] });
-    expect(result.refusal?.code).toBe("untracked-add");
-    expect(result.refusal?.reason).toContain("1 untracked file");
+describe("every git command is attempted", () => {
+  it("no longer refuses object-store maintenance", () => {
+    expect(guard("git gc").refusal).toBeNull();
+    expect(guard("git repack -ad").refusal).toBeNull();
+    expect(guard("git prune").refusal).toBeNull();
   });
 
-  it("allows add -A when nothing is untracked", () => {
+  it("no longer refuses remote commands", () => {
+    expect(guard("git push origin main").refusal).toBeNull();
+    expect(guard("git fetch --all").refusal).toBeNull();
+    expect(guard("git pull").refusal).toBeNull();
+  });
+
+  it("no longer refuses commands that act on untracked files", () => {
     expect(guard("git add -A").refusal).toBeNull();
+    expect(guard("git add .").refusal).toBeNull();
+    expect(guard("git add -f local.env").refusal).toBeNull();
+    expect(guard("git stash -u").refusal).toBeNull();
+    expect(guard("git stash -a").refusal).toBeNull();
+    expect(guard("git clean -fd").refusal).toBeNull();
   });
 
-  it("refuses a pathspec naming a specific untracked file", () => {
-    const result = guard("git add secret.txt", { untracked: ["secret.txt"] });
-    expect(result.refusal?.code).toBe("untracked-add");
+  it("no longer refuses branch switches against untracked or ignored files", () => {
+    expect(guard("git checkout feature").refusal).toBeNull();
+    expect(guard("git checkout -f feature").refusal).toBeNull();
+    expect(guard("git switch -f feature").refusal).toBeNull();
   });
 
-  it("refuses a pathspec that names an untracked directory", () => {
-    const result = guard("git add build", { untracked: ["build/output.js"] });
-    expect(result.refusal?.code).toBe("untracked-add");
+  it("no longer refuses plumbing whose effect lands in Modelled state", () => {
+    expect(guard("git update-ref refs/heads/x HEAD").refusal).toBeNull();
+    expect(guard("git symbolic-ref HEAD refs/heads/other").refusal).toBeNull();
+    expect(guard("git read-tree HEAD").refusal).toBeNull();
+    expect(guard("git ls-files").refusal).toBeNull();
+    expect(guard("git rev-list --all").refusal).toBeNull();
+    expect(guard("git notes add -m hi").refusal).toBeNull();
   });
 
-  it("allows a pathspec that names a tracked file", () => {
-    expect(guard("git add a.txt", { untracked: ["other.txt"] }).refusal).toBeNull();
+  it("no longer refuses merge, reset or revert", () => {
+    expect(guard("git merge feature").refusal).toBeNull();
+    expect(guard("git reset --hard HEAD~1").refusal).toBeNull();
+    expect(guard("git revert HEAD").refusal).toBeNull();
   });
+});
 
-  it("refuses add -f when ignored files exist", () => {
-    const result = guard("git add -f local.env", { ignored: ["local.env"] });
-    expect(result.refusal?.code).toBe("ignored-add");
+describe("commands with no unattended result are explained", () => {
+  it("refuses add -p and add -i", () => {
+    expect(guard("git add -p").refusal?.code).toBe("interactive-add");
+    expect(guard("git add -i").refusal?.code).toBe("interactive-add");
   });
 
   it("refuses add -e because the edit is the command", () => {
     expect(guard("git add -e a.txt").refusal?.code).toBe("interactive-add-edit");
   });
 
-  it("refuses add -p as an interactive loop", () => {
-    expect(guard("git add -p").refusal?.code).toBe("interactive-add");
+  it("refuses stash -p", () => {
+    expect(guard("git stash -p").refusal?.code).toBe("interactive-stash");
   });
 
-  it("refuses stash -u when untracked files exist", () => {
-    expect(guard("git stash -u", { untracked: ["u.txt"] }).refusal?.code).toBe("untracked-stash");
-  });
-});
-
-describe("branch switching", () => {
-  it("refuses a plain switch when ignored files exist", () => {
-    const result = guard("git checkout feature", { ignored: ["local.env"] });
-    expect(result.refusal?.code).toBe("ignored-switch");
+  it("refuses patch modes on checkout and reset", () => {
+    expect(guard("git checkout -p").refusal?.code).toBe("interactive-patch");
+    expect(guard("git reset -p").refusal?.code).toBe("interactive-patch");
   });
 
-  it("allows a plain switch with --no-overwrite-ignore", () => {
-    expect(
-      guard("git checkout --no-overwrite-ignore feature", { ignored: ["local.env"] }).refusal
-    ).toBeNull();
-  });
-
-  it("refuses a forced switch when untracked files exist", () => {
-    const result = guard("git checkout -f feature", { untracked: ["u.txt"] });
-    expect(result.refusal?.code).toBe("forced-switch-untracked");
-  });
-
-  it("fails closed on switch -f", () => {
-    const result = guard("git switch -f feature", { untracked: ["u.txt"] });
-    expect(result.refusal?.code).toBe("forced-switch-untracked");
-  });
-
-  it("does not gate a path restore", () => {
-    expect(guard("git checkout -- a.txt", { ignored: ["local.env"] }).refusal).toBeNull();
-  });
-
-  it("does not gate merge against untracked files", () => {
-    expect(guard("git merge feature", { untracked: ["u.txt"] }).refusal).toBeNull();
-  });
-});
-
-describe("editor-driven commands", () => {
   it("refuses commit without a message", () => {
     expect(guard("git commit").refusal?.code).toBe("commit-needs-message");
   });
@@ -111,13 +94,19 @@ describe("editor-driven commands", () => {
     expect(guard("git merge feature").autoAnswerMergeMessage).toBe(true);
     expect(guard("git merge feature -m 'x'").autoAnswerMergeMessage).toBe(false);
   });
+});
 
+describe("arbitrary execution is refused", () => {
   it("refuses rebase --exec", () => {
     expect(guard("git rebase --exec 'echo hi' HEAD~1").refusal?.code).toBe("rebase-exec");
   });
 
   it("refuses a cherry-pick that would open an editor", () => {
     expect(guard("git cherry-pick -e abc123").refusal?.code).toBe("sequencer-edit");
+  });
+
+  it("refuses rebase --patch", () => {
+    expect(guard("git rebase --patch HEAD~2").refusal?.code).toBe("rebase-patch");
   });
 });
 
@@ -130,6 +119,11 @@ describe("interactive rebase todo", () => {
   it("refuses exec", () => {
     const result = guard("git rebase -i HEAD~2", { sequence: "exec rm -rf /" });
     expect(result.refusal?.code).toBe("sequence-exec");
+  });
+
+  it("refuses break", () => {
+    const result = guard("git rebase -i HEAD~2", { sequence: "break" });
+    expect(result.refusal?.code).toBe("sequence-break");
   });
 
   it("allows pick, squash, fixup, drop and edit", () => {
