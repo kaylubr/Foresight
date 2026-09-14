@@ -252,56 +252,63 @@ export default function App() {
         {error && repo ? <p className="error">{error}</p> : null}
       </section>
 
-      <section className="section">
-        {outcome ? (
-          <OutcomePanel
-            outcome={outcome}
-            footer={
-              <>
-                {staleness?.stale ? (
-                  <div className="detail">
-                    <h4 className="label">Stale</h4>
-                    <p className="muted">
-                      {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
-                      for an accurate result.
-                    </p>
+      <div className="workspace">
+        <section className="pane" aria-label="Command info">
+          <h2 className="label">Command info</h2>
+          {outcome ? (
+            <OutcomePanel
+              outcome={outcome}
+              footer={
+                <>
+                  {staleness?.stale ? (
+                    <div className="detail">
+                      <h4 className="label">Stale</h4>
+                      <p className="muted">
+                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
+                        for an accurate result.
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className="actions">
+                    <button onClick={() => void copyCommand()}>Copy command</button>
+                    <span className="mono muted">{outcome.display}</span>
                   </div>
-                ) : null}
-                <div className="actions">
-                  <button onClick={() => void copyCommand()}>Copy command</button>
-                  <span className="mono muted">{outcome.display}</span>
-                </div>
-                <p className="copy-note">
-                  Foresight has finished rehearsing. Run the command yourself when you are ready.
-                </p>
-              </>
-            }
-          />
-        ) : (
-          <p className="empty">
-            Enter a Git command above and rehearse it to see exactly what it would change. Foresight
-            clones the repository, mirrors your staged and unstaged state, runs the command in the clone,
-            and reports the difference.
-          </p>
-        )}
-      </section>
-
-      {repo && repo.graph.commits.length > 0 ? (
-        <section className="section">
-          <h2 className="label">Commit graph</h2>
-          <CommitGraph
-            before={outcome?.graphBefore ?? repo.graph}
-            after={outcome?.graphAfter ?? null}
-            changedRefs={changedRefs}
-          />
-          {changedRefs.length > 0 ? (
-            <p className="cs-note">
-              Refs the rehearsal would move are marked on the graph. Commits the command would create are
-              drawn from the rehearsal clone.
+                  <p className="copy-note">
+                    Foresight has finished rehearsing. Run the command yourself when you are ready.
+                  </p>
+                </>
+              }
+            />
+          ) : (
+            <p className="empty">
+              Enter a Git command above and rehearse it to see exactly what it would change. Foresight
+              clones the repository, mirrors your staged and unstaged state, runs the command in the
+              clone, and reports the difference.
             </p>
-          ) : null}
+          )}
         </section>
-      ) : null}
+
+        <section className="pane" aria-label="Commit graph">
+          <h2 className="label">Commit graph</h2>
+          {repo && repo.graph.commits.length > 0 ? (
+            <>
+              <CommitGraph
+                before={outcome?.graphBefore ?? repo.graph}
+                after={outcome?.graphAfter ?? null}
+                changedRefs={changedRefs}
+              />
+              {changedRefs.length > 0 ? (
+                <p className="cs-note">
+                  Refs the rehearsal would move are marked on the graph. Commits the command would create
+                  are drawn from the rehearsal clone.
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="empty">Connect a repository to see its commit graph.</p>
+          )}
+        </section>
+      </div>
 
       <section className="disclosure">
         <h2 className="label">What Foresight does, and what it guarantees</h2>

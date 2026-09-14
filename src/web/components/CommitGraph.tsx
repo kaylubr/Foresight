@@ -6,7 +6,7 @@ const ROW_HEIGHT = 26;
 const LANE_WIDTH = 16;
 const RADIUS = 5;
 const PADDING = 14;
-const LABEL_WIDTH = 460;
+const LABEL_WIDTH = 300;
 const LANE_TONES = [0.82, 0.66, 0.54, 0.46, 0.4];
 
 type NodeState = "present" | "added" | "removed";
@@ -262,7 +262,7 @@ export default function CommitGraph({
                     );
                   })}
                   <tspan style={{ fill: "oklch(0.6 0 0)" }}>{row.commit.sha.slice(0, 7)} </tspan>
-                  <tspan style={{ fill: "oklch(0.74 0 0)" }}>{row.commit.subject.slice(0, 72)}</tspan>
+                  <tspan style={{ fill: "oklch(0.74 0 0)" }}>{row.commit.subject.slice(0, 40)}</tspan>
                 </text>
               </g>
             );

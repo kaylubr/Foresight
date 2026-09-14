@@ -82,7 +82,7 @@ body {
 .page {
   display: flex;
   flex-direction: column;
-  max-width: 1080px;
+  max-width: 1240px;
   margin-inline: auto;
   padding: var(--space-9) var(--space-4) 72px;
 }
@@ -132,6 +132,23 @@ body {
   margin-top: var(--space-9);
   padding-top: var(--space-9);
   border-top: 1px solid var(--line);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: var(--space-9);
+  align-items: start;
+  margin-top: var(--space-9);
+  padding-top: var(--space-9);
+  border-top: 1px solid var(--line);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
 }
 
 .section.attached {
@@ -634,6 +651,12 @@ details > summary:hover {
 
 .caveat-item .name {
   color: var(--warn);
+}
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @media (max-width: 720px) {
