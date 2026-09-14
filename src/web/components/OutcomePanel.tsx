@@ -54,7 +54,12 @@ export default function OutcomePanel({
         <p className="muted">Try instead: {outcome.alternative}</p>
       ) : null}
 
-      {outcome.kind === "tool-error" ? <p className="muted">Next step: {outcome.nextStep}</p> : null}
+      {outcome.kind === "tool-error" ? (
+        <>
+          <p className="muted">{outcome.reason}</p>
+          <p className="muted">Next step: {outcome.nextStep}</p>
+        </>
+      ) : null}
 
       {outcome.kind === "conflict-stop" && outcome.paths.length > 0 ? (
         <ul className="stop-list">
@@ -72,7 +77,8 @@ export default function OutcomePanel({
 
       {showChangeSet ? <ChangeSetView changeSet={outcome.changeSet} /> : null}
 
-      {outcome.kind === "failure" && outcome.stderr.trim().length > 0 ? (
+      {(outcome.kind === "failure" || outcome.kind === "tool-error") &&
+      outcome.stderr.trim().length > 0 ? (
         <pre className="muted">{outcome.stderr.trim().slice(0, 2000)}</pre>
       ) : null}
 
