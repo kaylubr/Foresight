@@ -289,11 +289,15 @@ export default function App() {
       {repo && repo.graph.commits.length > 0 ? (
         <section className="section">
           <h2 className="label">Commit graph</h2>
-          <CommitGraph commits={repo.graph.commits} head={repo.state.head} changedRefs={changedRefs} />
+          <CommitGraph
+            before={outcome?.graphBefore ?? repo.graph}
+            after={outcome?.graphAfter ?? null}
+            changedRefs={changedRefs}
+          />
           {changedRefs.length > 0 ? (
             <p className="cs-note">
-              Refs the rehearsal would move are marked on the graph. Commits the command would create do
-              not exist in this repository yet, so they are not drawn.
+              Refs the rehearsal would move are marked on the graph. Commits the command would create are
+              drawn from the rehearsal clone.
             </p>
           ) : null}
         </section>

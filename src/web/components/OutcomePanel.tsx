@@ -57,6 +57,15 @@ export default function OutcomePanel({
         <h3 className="outcome-headline">{headline(outcome)}</h3>
       </div>
 
+      {outcome.fidelityWarnings.length > 0 ? (
+        <div className="fidelity">
+          <h4 className="label">This preview is not a faithful copy</h4>
+          {outcome.fidelityWarnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      ) : null}
+
       {outcome.kind === "refusal" ? (
         <div className="detail">
           <h4 className="label">Reason</h4>
@@ -96,6 +105,13 @@ export default function OutcomePanel({
           <p>
             Foresight stopped the rehearsal there rather than resolving it, and discarded the clone.
           </p>
+        </div>
+      ) : null}
+
+      {outcome.kind === "failure" && outcome.explanation ? (
+        <div className="detail">
+          <h4 className="label">What this means</h4>
+          <p>{outcome.explanation}</p>
         </div>
       ) : null}
 

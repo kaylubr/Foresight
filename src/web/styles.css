@@ -540,6 +540,39 @@ button.quiet:hover:not(:disabled) {
   color: var(--text-muted);
 }
 
+.fidelity {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-inline-start: 3px solid var(--warn);
+  padding-inline-start: var(--space-4);
+}
+
+.fidelity .label {
+  color: var(--warn);
+}
+
+.fidelity p {
+  margin: 0;
+  max-width: 74ch;
+  font-size: var(--t-body);
+  color: var(--text);
+}
+
+.graph-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.graph-bar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--t-label);
+}
+
 .graph {
   overflow: auto;
   max-height: 440px;
