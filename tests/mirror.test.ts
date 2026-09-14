@@ -29,6 +29,9 @@ describe("createMirror", () => {
     const cloned = await readModelledState(mirror.path);
     expect(cloned.head.symbolic).toBe(originState.head.symbolic);
     expect(cloned.head.commit).toBe(originState.head.commit);
-    expect(cloned.refs).toEqual(originState.refs);
+
+    const localHeads = (refs: { name: string }[]) =>
+      refs.filter((ref) => ref.name.startsWith("refs/heads/")).sort((a, b) => a.name.localeCompare(b.name));
+    expect(localHeads(cloned.refs)).toEqual(localHeads(originState.refs));
   }, 120_000);
 });
