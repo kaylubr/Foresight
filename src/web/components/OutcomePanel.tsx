@@ -12,14 +12,9 @@ const KIND_LABELS: Record<RehearsalOutcome["kind"], string> = {
   "tool-error": "Foresight failed"
 };
 
-const KIND_MARKS: Record<RehearsalOutcome["kind"], string> = {
-  preview: "\u25cf",
-  "conflict-stop": "\u25c6",
-  "pause-stop": "\u25c7",
-  failure: "\u2715",
-  refusal: "\u2298",
-  "tool-error": "\u26a0"
-};
+function plain(value: string): string {
+  return value.replace(/`/g, "");
+}
 
 function short(value: string | null): string {
   return value ? value.slice(0, 7) : "unknown";
@@ -29,18 +24,18 @@ function headline(outcome: RehearsalOutcome): string {
   switch (outcome.kind) {
     case "preview":
       return outcome.changeSet?.empty
-        ? "The command would change nothing in Modelled state."
-        : "Here is what the command would change.";
+        ? "Nothing in Modelled state changed."
+        : "Changes detected across the modelled state.";
     case "conflict-stop":
-      return `The ${outcome.operation} would stop on a conflict at ${short(outcome.step)}; the rehearsal backed it out.`;
+      return `Stopped at ${short(outcome.step)}; the rehearsal backed it out.`;
     case "pause-stop":
-      return `The rebase would stop at an \`${outcome.action}\` step (${short(outcome.step)}) and hand control back to you.`;
+      return `The rebase would stop at an \`${outcome.action}\` step and hand control back to you.`;
     case "failure":
       return `git ran the command and exited with code ${outcome.exitCode}.`;
     case "refusal":
-      return outcome.reason;
+      return "Foresight refused to rehearse this command.";
     case "tool-error":
-      return TOOL_ERROR_LABELS[outcome.cause] ?? outcome.reason;
+      return TOOL_ERROR_LABELS[outcome.cause] ?? "Foresight could not complete the rehearsal.";
   }
 }
 
@@ -56,72 +51,102 @@ export default function OutcomePanel({
 
   return (
     <div className={`outcome ${outcome.kind}`}>
-      <p className="outcome-kind">
-        <span className="kind-mark" aria-hidden="true">
-          {KIND_MARKS[outcome.kind]}
-        </span>
-        {KIND_LABELS[outcome.kind]}
-      </p>
+      <div className="outcome-head">
+        <p className="outcome-kind">{KIND_LABELS[outcome.kind]}</p>
+        <p className="outcome-command">{outcome.display}</p>
+        <h3 className="outcome-headline">{headline(outcome)}</h3>
+      </div>
 
-      <h3 className="outcome-title">{headline(outcome)}</h3>
-
-      {outcome.kind === "refusal" && outcome.alternative ? (
-        <p className="muted">Try instead: {outcome.alternative}</p>
+      {outcome.kind === "refusal" ? (
+        <div className="detail">
+          <h4 className="label">Reason</h4>
+          <p>{plain(outcome.reason)}</p>
+          {outcome.alternative ? (
+            <>
+              <h4 className="label">Alternative</h4>
+              <p>{plain(outcome.alternative)}</p>
+            </>
+          ) : null}
+        </div>
       ) : null}
 
       {outcome.kind === "tool-error" ? (
-        <>
-          <p className="muted">{outcome.reason}</p>
-          <p className="muted">Next step: {outcome.nextStep}</p>
-        </>
+        <div className="detail">
+          <h4 className="label">Cause</h4>
+          <p>{plain(outcome.reason)}</p>
+          <h4 className="label">Next step</h4>
+          <p>{plain(outcome.nextStep)}</p>
+        </div>
       ) : null}
 
       {outcome.kind === "conflict-stop" && outcome.paths.length > 0 ? (
-        <ul className="stop-list">
-          {outcome.paths.map((path) => (
-            <li key={path}>{path}</li>
-          ))}
-        </ul>
-      ) : null}
-
-      {outcome.kind === "pause-stop" && outcome.action ? (
-        <p className="muted">
-          Foresight stopped the rehearsal there rather than resolving it, and discarded the clone.
-        </p>
-      ) : null}
-
-      {showChangeSet ? <ChangeSetView changeSet={outcome.changeSet} /> : null}
-
-      {(outcome.kind === "failure" || outcome.kind === "tool-error") &&
-      outcome.stderr.trim().length > 0 ? (
-        <pre className="muted">{outcome.stderr.trim().slice(0, 2000)}</pre>
-      ) : null}
-
-      {outcome.blockingAnomaly ? (
-        <p className="anomaly">
-          Blocking anomaly: the object store moved and no Modelled surface explains it.
-        </p>
-      ) : null}
-
-      {outcome.sideEffects.length > 0 ? (
-        <div>
-          <h4 className="section-label">Detected but not modelled</h4>
-          <ul className="side-effects">
-            {outcome.sideEffects.map((badge) => (
-              <li key={badge.surface} className={badge.blocking ? "side-effect blocking" : "side-effect"}>
-                <span className="name">{badge.label}</span>
-                <span className="muted">{badge.detail}</span>
-              </li>
+        <div className="detail">
+          <h4 className="label">Unmerged paths</h4>
+          <ul className="stop-list">
+            {outcome.paths.map((path) => (
+              <li key={path}>{path}</li>
             ))}
           </ul>
         </div>
       ) : null}
 
-      {outcome.caveats.map((caveat) => (
-        <p className="caveat" key={caveat.id}>
-          {caveat.label} <span className="muted">{caveat.detail}</span>
-        </p>
-      ))}
+      {outcome.kind === "pause-stop" ? (
+        <div className="detail">
+          <h4 className="label">Behaviour</h4>
+          <p>
+            Foresight stopped the rehearsal there rather than resolving it, and discarded the clone.
+          </p>
+        </div>
+      ) : null}
+
+      {outcome.kind === "failure" && outcome.stderr.trim().length > 0 ? (
+        <div className="detail">
+          <h4 className="label">git output</h4>
+          <pre className="diagnostic">{outcome.stderr.trim().slice(0, 2000)}</pre>
+        </div>
+      ) : null}
+
+      {outcome.kind === "tool-error" && outcome.stderr.trim().length > 0 ? (
+        <div className="detail">
+          <h4 className="label">git output</h4>
+          <pre className="diagnostic">{outcome.stderr.trim().slice(0, 2000)}</pre>
+        </div>
+      ) : null}
+
+      {showChangeSet && outcome.changeSet ? (
+        <div className="detail">
+          <h4 className="label">Change set</h4>
+          <ChangeSetView changeSet={outcome.changeSet} />
+        </div>
+      ) : null}
+
+      {outcome.blockingAnomaly ? (
+        <div className="anomaly">
+          <h4 className="label">Blocking anomaly</h4>
+          <p>The object store changed, but no modelled change explains it.</p>
+        </div>
+      ) : null}
+
+      {outcome.sideEffects.length > 0 ? (
+        <div className="detail">
+          <h4 className="label">Side effects</h4>
+          <p className="muted">
+            Detected but not modelled directly. Foresight cannot say what these mean for your
+            repository beyond the fact that they moved.
+          </p>
+          <ul className="side-effects">
+            {outcome.sideEffects.map((badge) => (
+              <li
+                key={badge.surface}
+                className={badge.blocking ? "side-effect blocking" : "side-effect"}
+              >
+                <span className="name">{badge.label}</span>
+                <span className="note">{badge.detail}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {footer}
     </div>

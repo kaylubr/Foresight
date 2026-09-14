@@ -46,8 +46,15 @@ export interface PathChange {
 export interface HeadChange {
   before: string | null;
   after: string | null;
+  commitBefore: string | null;
+  commitAfter: string | null;
   detachedBefore: boolean;
   detachedAfter: boolean;
+}
+
+export interface CountChange {
+  before: number;
+  after: number;
 }
 
 export interface ChangeSet {
@@ -55,8 +62,10 @@ export interface ChangeSet {
   refs: RefChange[];
   head: HeadChange;
   indexChanged: boolean;
+  indexCounts: CountChange;
   staged: PathChange[];
   worktreeChanged: boolean;
+  worktreeCounts: CountChange;
   worktree: PathChange[];
   commitsAdded: string[];
   commitsRemoved: string[];

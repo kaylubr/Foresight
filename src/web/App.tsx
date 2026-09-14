@@ -16,16 +16,10 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
 }
 
-interface Status {
-  tone: "ready" | "blocked" | "busy";
-  mark: string;
-  text: string;
-}
-
 export default function App() {
   const [repoPath, setRepoPath] = useState("");
   const [repo, setRepo] = useState<RepoConnectResult | null>(null);
-  const [command, setCommand] = useState("git status");
+  const [command, setCommand] = useState("");
   const [sequence, setSequence] = useState("");
   const [outcome, setOutcome] = useState<RehearsalOutcome | null>(null);
   const [health, setHealth] = useState<HealthResult | null>(null);
@@ -33,7 +27,6 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAllCaveats, setShowAllCaveats] = useState(false);
 
   useEffect(() => {
     api
@@ -71,7 +64,7 @@ export default function App() {
 
   const runPreview = useCallback(async () => {
     if (!repo) {
-      setError("Connect to a repository first, then rehearse against it.");
+      setError("Connect a repository before rehearsing a command against it.");
       return;
     }
     setBusy(true);
@@ -107,62 +100,128 @@ export default function App() {
 
   const sandboxReady = health?.sandbox.ok ?? false;
 
-  const status: Status = busy
-    ? { tone: "busy", mark: "\u25d0", text: "Rehearsing. The clone is being built and the command is running." }
-    : !repo
-      ? { tone: "blocked", mark: "\u25b2", text: "Connect to a repository to rehearse against it." }
-      : !health
-        ? { tone: "blocked", mark: "\u25b2", text: "Foresight cannot reach its own API, so rehearsals will fail." }
-        : !sandboxReady
-          ? {
-              tone: "blocked",
-              mark: "\u25b2",
-              text: `Rehearsals are unavailable: ${health.sandbox.reason}. Next step: ${health.sandbox.nextStep}`
-            }
-          : { tone: "ready", mark: "\u25cf", text: `Sandbox ready (${health.sandbox.method}). Network is denied to the command.` };
+  const status = busy
+    ? { tone: "busy", text: "Rehearsing. Building the clone and running the command." }
+    : !health
+      ? { tone: "blocked", text: "Foresight cannot reach its own API." }
+      : !sandboxReady
+        ? { tone: "blocked", text: `Rehearsals unavailable: ${health.sandbox.reason}` }
+        : { tone: "ready", text: `Network denied to the command (${health.sandbox.method}).` };
+
+  const summary: string[] = [];
+  if (repo) {
+    summary.push(
+      repo.state.head.detached
+        ? `detached at ${repo.state.head.commit?.slice(0, 7) ?? "unborn"}`
+        : (repo.state.head.symbolic?.replace("refs/heads/", "") ?? "unborn")
+    );
+    summary.push(`${repo.state.stagedEntries.length} staged`);
+    summary.push(`${repo.state.worktreeEntries.length} modified`);
+    summary.push(`${repo.untracked.length} untracked`);
+    if (repo.ignored.length > 0) {
+      summary.push(`${repo.ignored.length} ignored`);
+    }
+    if (
+      repo.state.stagedEntries.length === 0 &&
+      repo.state.worktreeEntries.length === 0 &&
+      repo.untracked.length === 0
+    ) {
+      summary.push("clean repository state");
+    }
+  }
+
+  const changedRefs = outcome?.changeSet?.refs ?? [];
 
   return (
-    <div className="app">
-      <header className="setupbar">
+    <div className="page">
+      <header className="masthead">
         <h1 className="brand">Foresight</h1>
-        <div className="field">
-          <label htmlFor="repo-path">Repository path</label>
+        <p className={`status ${status.tone}`} role="status">
+          {status.text}
+        </p>
+      </header>
+
+      <section className="section">
+        {repo ? (
+          <>
+            <p className="repo-path">{repo.path}</p>
+            <p className="repo-summary">
+              {summary.map((part, index) => (
+                <span key={part}>
+                  {index > 0 ? <span className="sep">&middot;</span> : null}
+                  {part}
+                </span>
+              ))}
+            </p>
+            {repo.staticDisqualifiers.submodules ||
+            repo.staticDisqualifiers.lfs ||
+            repo.staticDisqualifiers.linkedWorktrees > 0 ||
+            repo.dynamicDisqualifiers.operation ? (
+              <p className="repo-summary blocked">Previews are blocked for this repository.</p>
+            ) : null}
+            <div className="actions">
+              <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
+                Refresh state
+              </button>
+              <button className="quiet" onClick={() => setRepo(null)}>
+                Change repository
+              </button>
+            </div>
+            <RepoState repo={repo} />
+          </>
+        ) : (
+          <>
+            <div className="field">
+              <label htmlFor="repo-path">Repository path</label>
+              <input
+                id="repo-path"
+                value={repoPath}
+                placeholder="/home/you/code/project"
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => setRepoPath(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    void connect();
+                  }
+                }}
+              />
+            </div>
+            <div className="actions">
+              <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
+                Connect
+              </button>
+            </div>
+            <p className="empty">
+              Point Foresight at a local Git working copy. It reads the repository to show its state and
+              never writes to it.
+            </p>
+          </>
+        )}
+        {error && !repo ? <p className="error">{error}</p> : null}
+      </section>
+
+      <section className="section">
+        <label className="label" htmlFor="command">
+          Command
+        </label>
+        <div className="editor">
+          <span className="prompt" aria-hidden="true">
+            $
+          </span>
           <input
-            id="repo-path"
-            value={repoPath}
-            placeholder="/home/you/code/project"
-            onChange={(event) => setRepoPath(event.target.value)}
+            id="command"
+            value={command}
+            placeholder="git reset --soft HEAD~1"
+            autoComplete="off"
+            spellCheck={false}
+            onChange={(event) => setCommand(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
-                void connect();
+                void runPreview();
               }
             }}
           />
-        </div>
-        <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
-          Connect
-        </button>
-      </header>
-
-      <section className="commandbar" aria-label="Rehearsal">
-        <div className="command-row">
-          <div className="field">
-            <label htmlFor="command">Command to rehearse</label>
-            <input
-              id="command"
-              value={command}
-              placeholder="git commit -m 'message'"
-              onChange={(event) => setCommand(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  void runPreview();
-                }
-              }}
-            />
-          </div>
-          <button className="primary" onClick={() => void runPreview()} disabled={busy}>
-            Rehearse
-          </button>
         </div>
 
         {needsSequence ? (
@@ -170,7 +229,7 @@ export default function App() {
             <label htmlFor="sequence">Interactive rebase todo</label>
             <textarea
               id="sequence"
-              rows={5}
+              rows={4}
               value={sequence}
               aria-describedby="sequence-hint"
               placeholder={"pick abc123 subject\nsquash def456 subject"}
@@ -182,114 +241,110 @@ export default function App() {
           </div>
         ) : null}
 
-        <p className={`precondition ${status.tone}`} role="status">
-          <span className="mark" aria-hidden="true">
-            {status.mark}
+        <div className="actions">
+          <button className="primary" onClick={() => void runPreview()} disabled={busy}>
+            Rehearse
+          </button>
+          <span className="muted">
+            Runs in a throwaway clone. Your repository is not modified by the rehearsal.
           </span>
-          {status.text}
-        </p>
-
-        {error ? <p className="error">{error}</p> : null}
+        </div>
+        {error && repo ? <p className="error">{error}</p> : null}
       </section>
 
-      <div className="workspace">
-        <section className="stage" aria-label="Outcome">
-          <h2 className="section-label">Outcome</h2>
-          <div className="stage-surface">
-            {outcome ? (
-              <OutcomePanel
-                outcome={outcome}
-                footer={
-                  <>
-                    {staleness?.stale ? (
-                      <p className="stale">
-                        This preview is stale: {staleness.changed.join(", ")} changed after the mirror was taken.
-                      </p>
-                    ) : null}
-                    {outcome.kind !== "refusal" && outcome.kind !== "tool-error" ? (
-                      <div className="copy-row">
-                        <button onClick={() => void copyCommand()}>Copy command</button>
-                        <span className="muted mono">{outcome.display}</span>
-                      </div>
-                    ) : null}
-                  </>
-                }
-              />
-            ) : (
-              <p className="empty">
-                Rehearse a command to see what it would change. Foresight clones the repository, runs the command
-                there, and reports the difference. Nothing here touches your working copy.
-              </p>
-            )}
-          </div>
-        </section>
-
-        <aside className="inspector" aria-label="Repository">
-          <div className="inspector-head">
-            <h2 className="section-label">Repository</h2>
-            {repo ? (
-              <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
-                Refresh
-              </button>
-            ) : null}
-          </div>
-          {repo ? (
-            <RepoState repo={repo} />
-          ) : (
-            <p className="empty">No repository connected yet.</p>
-          )}
-          {repo && repo.graph.commits.length > 0 ? (
-            <div className="group">
-              <h3 className="section-label">Commits</h3>
-              <CommitGraph commits={repo.graph.commits} />
-            </div>
-          ) : null}
-        </aside>
-      </div>
-
-      <footer className="footnotes">
-        <div className="footnote-block">
-          <h2 className="section-label">Caveats</h2>
-          {outcome && outcome.caveats.length > 0 ? (
-            outcome.caveats.map((caveat) => (
-              <p className="caveat" key={caveat.id}>
-                {caveat.label} <span className="muted">{caveat.detail}</span>
-              </p>
-            ))
-          ) : (
-            <p className="muted">No caveats apply to the current outcome.</p>
-          )}
-          {repo ? (
-            <details open={showAllCaveats} onToggle={(event) => setShowAllCaveats(event.currentTarget.open)}>
-              <summary>All known caveats</summary>
-              {Object.entries(CAVEAT_CATALOG).map(([id, entry]) => (
-                <p className="caveat" key={id}>
-                  {entry.label} <span className="muted">{entry.detail}</span>
+      <section className="section">
+        {outcome ? (
+          <OutcomePanel
+            outcome={outcome}
+            footer={
+              <>
+                {staleness?.stale ? (
+                  <div className="detail">
+                    <h4 className="label">Stale</h4>
+                    <p className="muted">
+                      {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
+                      for an accurate result.
+                    </p>
+                  </div>
+                ) : null}
+                <div className="actions">
+                  <button onClick={() => void copyCommand()}>Copy command</button>
+                  <span className="mono muted">{outcome.display}</span>
+                </div>
+                <p className="copy-note">
+                  Foresight has finished rehearsing. Run the command yourself when you are ready.
                 </p>
-              ))}
-            </details>
-          ) : null}
-        </div>
+              </>
+            }
+          />
+        ) : (
+          <p className="empty">
+            Enter a Git command above and rehearse it to see exactly what it would change. Foresight
+            clones the repository, mirrors your staged and unstaged state, runs the command in the clone,
+            and reports the difference.
+          </p>
+        )}
+      </section>
 
-        <div className="footnote-block">
-          <h2 className="section-label">Session history</h2>
-          {history.length > 0 ? (
-            history
+      {repo && repo.graph.commits.length > 0 ? (
+        <section className="section">
+          <h2 className="label">Commit graph</h2>
+          <CommitGraph commits={repo.graph.commits} head={repo.state.head} changedRefs={changedRefs} />
+          {changedRefs.length > 0 ? (
+            <p className="cs-note">
+              Refs the rehearsal would move are marked on the graph. Commits the command would create do
+              not exist in this repository yet, so they are not drawn.
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="disclosure">
+        <h2 className="label">What Foresight does, and what it guarantees</h2>
+        <p>
+          Foresight rehearses the command in a throwaway clone. Your actual repository is not modified by
+          the rehearsal.
+        </p>
+        <p className="guarantee">
+          It guarantees one thing: Git&apos;s own object-store-rewriting commands, executed in the clone,
+          cannot alter your repository&apos;s object bytes. It is not a general security sandbox, and it
+          does not contain shell execution, filesystem writes or network access as a general capability.
+        </p>
+
+        {outcome && outcome.caveats.length > 0 ? (
+          <div className="detail">
+            <h3 className="label">Caveats that apply to this result</h3>
+            {outcome.caveats.map((caveat) => (
+              <p className="caveat-item" key={caveat.id}>
+                <span className="name">{caveat.label}</span> {caveat.detail}
+              </p>
+            ))}
+          </div>
+        ) : null}
+
+        <details>
+          <summary>All known caveats</summary>
+          {Object.entries(CAVEAT_CATALOG).map(([id, entry]) => (
+            <p className="caveat-item" key={id}>
+              <span className="name">{entry.label}</span> {entry.detail}
+            </p>
+          ))}
+        </details>
+
+        {history.length > 0 ? (
+          <details>
+            <summary>Session history ({history.length})</summary>
+            {history
               .slice()
               .reverse()
               .map((entry) => (
-                <div className="entry" key={entry.id}>
-                  <span className="mono key">{entry.display}</span>
-                  <span className="value muted">{entry.kind}</span>
-                </div>
-              ))
-          ) : (
-            <p className="muted">
-              Commands you rehearse appear here for as long as the session lasts. Nothing is written to disk.
-            </p>
-          )}
-        </div>
-      </footer>
+                <p className="caveat-item mono" key={entry.id}>
+                  {entry.display} <span className="faint">{entry.kind}</span>
+                </p>
+              ))}
+          </details>
+        ) : null}
+      </section>
     </div>
   );
 }

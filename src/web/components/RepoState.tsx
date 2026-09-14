@@ -1,8 +1,8 @@
 import type { RepoConnectResult } from "../../shared/types";
 
-function Entry({ label, value }: { label: string; value: string | number }) {
+function Row({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="entry">
+    <div className="state-row">
       <span className="key">{label}</span>
       <span className="value">{value}</span>
     </div>
@@ -23,15 +23,17 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
   return (
     <>
       {blocked ? (
-        <div className="group">
-          <h3 className="section-label">Previews are blocked</h3>
-          {staticDisqualifiers.submodules ? <p className="caveat">Submodules are present.</p> : null}
-          {staticDisqualifiers.lfs ? <p className="caveat">Git LFS filters are present.</p> : null}
+        <div className="detail">
+          <h3 className="label">Previews are blocked</h3>
+          {staticDisqualifiers.submodules ? <p className="caveat-item">Submodules are present.</p> : null}
+          {staticDisqualifiers.lfs ? <p className="caveat-item">Git LFS filters are present.</p> : null}
           {staticDisqualifiers.linkedWorktrees > 0 ? (
-            <p className="caveat">{staticDisqualifiers.linkedWorktrees} linked worktree(s) present.</p>
+            <p className="caveat-item">
+              {staticDisqualifiers.linkedWorktrees} linked worktree(s) present.
+            </p>
           ) : null}
           {dynamicDisqualifiers.operation ? (
-            <p className="caveat">
+            <p className="caveat-item">
               The repository is mid-{dynamicDisqualifiers.operation}; finish or abort it first.
             </p>
           ) : null}
@@ -39,54 +41,43 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
         </div>
       ) : null}
 
-      <div className="group">
-        <h3 className="section-label">State</h3>
-        <Entry label="Name" value={repo.name} />
-        <Entry
+      <div className="state-table">
+        <Row
           label="HEAD"
           value={
             state.head.detached
               ? `detached at ${state.head.commit?.slice(0, 7) ?? "unborn"}`
-              : `${state.head.symbolic ?? "unborn"} @ ${state.head.commit?.slice(0, 7) ?? "none"}`
+              : `${state.head.symbolic?.replace("refs/heads/", "") ?? "unborn"} @ ${state.head.commit?.slice(0, 7) ?? "none"}`
           }
         />
-        <Entry label="Branches" value={branches.length} />
-        <Entry label="Tags" value={tags.length} />
-        <Entry label="Staged paths" value={state.stagedEntries.length} />
-        <Entry label="Worktree paths" value={state.worktreeEntries.length} />
-        <Entry label="Untracked files" value={repo.untracked.length} />
-        <Entry label="Ignored files" value={repo.ignored.length} />
+        <Row label="Branches" value={branches.length} />
+        <Row label="Tags" value={tags.length} />
+        <Row label="Staged paths" value={state.stagedEntries.length} />
+        <Row label="Working directory paths" value={state.worktreeEntries.length} />
+        <Row label="Untracked files" value={repo.untracked.length} />
+        <Row label="Ignored files" value={repo.ignored.length} />
       </div>
 
-      <div className="group">
-        <h3 className="section-label">Refs</h3>
-        {state.refs.length === 0 ? (
-          <p className="muted">No refs yet.</p>
-        ) : (
-          state.refs.map((ref) => <Entry key={ref.name} label={ref.name} value={ref.target.slice(0, 7)} />)
-        )}
-      </div>
+      {state.refs.length > 0 ? (
+        <div className="state-table">
+          {state.refs.map((ref) => (
+            <Row key={ref.name} label={ref.name} value={ref.target.slice(0, 7)} />
+          ))}
+        </div>
+      ) : null}
 
       {state.stagedEntries.length > 0 ? (
-        <div className="group">
-          <h3 className="section-label">Staged</h3>
+        <div className="state-table">
           {state.stagedEntries.map((entry) => (
-            <div className="entry" key={entry}>
-              <span className="mono key">{entry.split("\t")[1]}</span>
-              <span className="value">{entry.split("\t")[0]}</span>
-            </div>
+            <Row key={entry} label={entry.split("\t")[1] ?? entry} value={entry.split("\t")[0] ?? ""} />
           ))}
         </div>
       ) : null}
 
       {state.worktreeEntries.length > 0 ? (
-        <div className="group">
-          <h3 className="section-label">Working directory</h3>
+        <div className="state-table">
           {state.worktreeEntries.map((entry) => (
-            <div className="entry" key={entry}>
-              <span className="mono key">{entry.split("\t")[1]}</span>
-              <span className="value">{entry.split("\t")[0]}</span>
-            </div>
+            <Row key={entry} label={entry.split("\t")[1] ?? entry} value={entry.split("\t")[0] ?? ""} />
           ))}
         </div>
       ) : null}

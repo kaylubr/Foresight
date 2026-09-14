@@ -1,10 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
 import type { ChangeSet } from "../../shared/types";
-
-interface Step {
-  surface: string;
-  text: string;
-}
 
 const STATUS_WORDS: Record<string, string> = {
   M: "modified",
@@ -22,94 +16,118 @@ function word(status: string): string {
   return STATUS_WORDS[status] ?? status;
 }
 
-function short(value: string): string {
-  return value.slice(0, 7);
+function short(value: string | null): string {
+  return value ? value.slice(0, 7) : "none";
 }
 
-export function buildSteps(changeSet: ChangeSet): Step[] {
-  const steps: Step[] = [];
+function HeadLine({ changeSet }: { changeSet: ChangeSet }) {
+  const { head } = changeSet;
+  const label = head.detachedBefore ? "detached HEAD" : (head.before ?? "unborn");
+  return (
+    <div className="cs-row">
+      <span className="cs-key">{label}</span>
+      <span className="cs-from">{short(head.commitBefore)}</span>
+      <span className="cs-arrow" aria-hidden="true">
+        &rarr;
+      </span>
+      <span className="cs-to">{short(head.commitAfter)}</span>
+    </div>
+  );
+}
 
+export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet }) {
   const headChanged =
     changeSet.head.before !== changeSet.head.after ||
     changeSet.head.detachedBefore !== changeSet.head.detachedAfter;
-  if (headChanged) {
-    const before = changeSet.head.detachedBefore
-      ? `detached at ${short(changeSet.head.before ?? "")}`
-      : changeSet.head.before;
-    const after = changeSet.head.detachedAfter
-      ? `detached at ${short(changeSet.head.after ?? "")}`
-      : changeSet.head.after;
-    steps.push({ surface: "HEAD", text: `${before ?? "(unborn)"} becomes ${after ?? "(unborn)"}` });
-  }
 
-  for (const ref of changeSet.refs) {
-    const direction =
-      ref.before === null
-        ? `created at ${short(ref.after ?? "")}`
-        : ref.after === null
-          ? `deleted (was ${short(ref.before)})`
-          : `moved ${short(ref.before)} to ${short(ref.after)}`;
-    steps.push({ surface: "refs", text: `${ref.name} ${direction}` });
-  }
-
-  if (changeSet.commitsAdded.length > 0) {
-    steps.push({ surface: "commits", text: `${changeSet.commitsAdded.length} new commit(s) reachable` });
-  }
-  if (changeSet.commitsRemoved.length > 0) {
-    steps.push({
-      surface: "commits",
-      text: `${changeSet.commitsRemoved.length} commit(s) no longer reachable`
-    });
-  }
-
-  for (const change of changeSet.staged) {
-    steps.push({ surface: "index", text: `${word(change.after)} ${change.path}` });
-  }
-
-  for (const change of changeSet.worktree) {
-    steps.push({ surface: "worktree", text: `${word(change.after)} ${change.path}` });
-  }
-
-  return steps;
-}
-
-export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet | null }) {
-  const steps = useMemo(() => (changeSet ? buildSteps(changeSet) : []), [changeSet]);
-  const [visible, setVisible] = useState(0);
-
-  useEffect(() => {
-    setVisible(0);
-    if (steps.length === 0) {
-      return;
-    }
-    let index = 0;
-    const timer = window.setInterval(() => {
-      index += 1;
-      setVisible(index);
-      if (index >= steps.length) {
-        window.clearInterval(timer);
-      }
-    }, 240);
-    return () => window.clearInterval(timer);
-  }, [steps]);
-
-  if (!changeSet) {
-    return <p className="muted">No change set — the command did not run.</p>;
-  }
-
-  if (changeSet.empty) {
-    return <p className="muted">Nothing in Modelled state changed.</p>;
-  }
+  const indexMoved =
+    changeSet.indexCounts.before !== changeSet.indexCounts.after || changeSet.staged.length > 0;
+  const worktreeMoved =
+    changeSet.worktreeCounts.before !== changeSet.worktreeCounts.after ||
+    changeSet.worktree.length > 0;
 
   return (
-    <div>
-      {steps.slice(0, visible).map((step, index) => (
-        <div className="change-step" key={`${step.surface}-${index}`}>
-          <span className="surface">{step.surface}</span>
-          <span>{step.text}</span>
+    <div className="changeset">
+      <div className="cs-group">
+        <h3 className="cs-group-label">Refs</h3>
+        {changeSet.refs.length === 0 ? (
+          <p className="cs-note">unchanged</p>
+        ) : (
+          changeSet.refs.map((ref) => (
+            <div className="cs-row" key={ref.name}>
+              <span className="cs-key">{ref.name}</span>
+              <span className="cs-from">{short(ref.before)}</span>
+              <span className="cs-arrow" aria-hidden="true">
+                &rarr;
+              </span>
+              <span className={ref.after ? "cs-to" : "cs-to faint"}>
+                {ref.after ? short(ref.after) : "deleted"}
+              </span>
+            </div>
+          ))
+        )}
+        {changeSet.commitsAdded.length > 0 ? (
+          <p className="cs-note">{changeSet.commitsAdded.length} commit(s) newly reachable</p>
+        ) : null}
+        {changeSet.commitsRemoved.length > 0 ? (
+          <p className="cs-note">{changeSet.commitsRemoved.length} commit(s) no longer reachable</p>
+        ) : null}
+      </div>
+
+      <div className="cs-group">
+        <h3 className="cs-group-label">HEAD</h3>
+        {headChanged ? <HeadLine changeSet={changeSet} /> : <p className="cs-note">unchanged</p>}
+      </div>
+
+      <div className="cs-group">
+        <h3 className="cs-group-label">Index</h3>
+        <div className="cs-row">
+          <span className="cs-key">staged files</span>
+          <span className="cs-from">{changeSet.indexCounts.before}</span>
+          <span className="cs-arrow" aria-hidden="true">
+            &rarr;
+          </span>
+          <span className={indexMoved ? "cs-to" : "cs-to faint"}>{changeSet.indexCounts.after}</span>
         </div>
-      ))}
-      {visible < steps.length ? <p className="muted">playing…</p> : null}
+        {changeSet.staged.map((change) => (
+          <div className="cs-row" key={change.path}>
+            <span className="cs-key">{change.path}</span>
+            <span className="cs-from">{word(change.before)}</span>
+            <span className="cs-arrow" aria-hidden="true">
+              &rarr;
+            </span>
+            <span className={change.after === "." ? "cs-to faint" : "cs-to"}>
+              {word(change.after)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="cs-group">
+        <h3 className="cs-group-label">Working directory</h3>
+        <div className="cs-row">
+          <span className="cs-key">modified files</span>
+          <span className="cs-from">{changeSet.worktreeCounts.before}</span>
+          <span className="cs-arrow" aria-hidden="true">
+            &rarr;
+          </span>
+          <span className={worktreeMoved ? "cs-to" : "cs-to faint"}>
+            {changeSet.worktreeCounts.after}
+          </span>
+        </div>
+        {changeSet.worktree.map((change) => (
+          <div className="cs-row" key={change.path}>
+            <span className="cs-key">{change.path}</span>
+            <span className="cs-from">{word(change.before)}</span>
+            <span className="cs-arrow" aria-hidden="true">
+              &rarr;
+            </span>
+            <span className={change.after === "." ? "cs-to faint" : "cs-to"}>
+              {word(change.after)}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

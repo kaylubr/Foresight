@@ -58,6 +58,8 @@ export function buildChangeSet(
   const head: HeadChange = {
     before: headIdentity(before.head),
     after: headIdentity(after.head),
+    commitBefore: before.head.commit,
+    commitAfter: after.head.commit,
     detachedBefore: before.head.detached,
     detachedAfter: after.head.detached
   };
@@ -88,8 +90,10 @@ export function buildChangeSet(
     refs,
     head,
     indexChanged,
+    indexCounts: { before: before.stagedEntries.length, after: after.stagedEntries.length },
     staged,
     worktreeChanged,
+    worktreeCounts: { before: before.worktreeEntries.length, after: after.worktreeEntries.length },
     worktree,
     commitsAdded,
     commitsRemoved
