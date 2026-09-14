@@ -12,6 +12,15 @@ const KIND_LABELS: Record<RehearsalOutcome["kind"], string> = {
   "tool-error": "Foresight failed"
 };
 
+const KIND_MARKS: Record<RehearsalOutcome["kind"], string> = {
+  preview: "\u25cf",
+  "conflict-stop": "\u25c6",
+  "pause-stop": "\u25c7",
+  failure: "\u2715",
+  refusal: "\u2298",
+  "tool-error": "\u26a0"
+};
+
 function short(value: string | null): string {
   return value ? value.slice(0, 7) : "unknown";
 }
@@ -46,9 +55,15 @@ export default function OutcomePanel({
     outcome.kind === "preview" || outcome.kind === "pause-stop" || outcome.kind === "failure";
 
   return (
-    <div className={`panel outcome ${outcome.kind}`}>
-      <div className="outcome-kind">{KIND_LABELS[outcome.kind]}</div>
-      <div className="outcome-title">{headline(outcome)}</div>
+    <div className={`outcome ${outcome.kind}`}>
+      <p className="outcome-kind">
+        <span className="kind-mark" aria-hidden="true">
+          {KIND_MARKS[outcome.kind]}
+        </span>
+        {KIND_LABELS[outcome.kind]}
+      </p>
+
+      <h3 className="outcome-title">{headline(outcome)}</h3>
 
       {outcome.kind === "refusal" && outcome.alternative ? (
         <p className="muted">Try instead: {outcome.alternative}</p>
@@ -71,7 +86,7 @@ export default function OutcomePanel({
 
       {outcome.kind === "pause-stop" && outcome.action ? (
         <p className="muted">
-          Foresight stopped the rehearsal there rather than resolving it; the clone was discarded.
+          Foresight stopped the rehearsal there rather than resolving it, and discarded the clone.
         </p>
       ) : null}
 
@@ -83,25 +98,29 @@ export default function OutcomePanel({
       ) : null}
 
       {outcome.blockingAnomaly ? (
-        <div className="badge blocking" style={{ marginTop: 10 }}>
-          Blocking anomaly: the object store moved and no Modelled surface explains it
-        </div>
+        <p className="anomaly">
+          Blocking anomaly: the object store moved and no Modelled surface explains it.
+        </p>
       ) : null}
 
       {outcome.sideEffects.length > 0 ? (
-        <div className="badges">
-          {outcome.sideEffects.map((badge) => (
-            <span key={badge.surface} className={badge.blocking ? "badge blocking" : "badge"} title={badge.detail}>
-              {badge.label}
-            </span>
-          ))}
+        <div>
+          <h4 className="section-label">Detected but not modelled</h4>
+          <ul className="side-effects">
+            {outcome.sideEffects.map((badge) => (
+              <li key={badge.surface} className={badge.blocking ? "side-effect blocking" : "side-effect"}>
+                <span className="name">{badge.label}</span>
+                <span className="muted">{badge.detail}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : null}
 
       {outcome.caveats.map((caveat) => (
-        <div className="caveat" key={caveat.id}>
-          {caveat.label} — <span className="muted">{caveat.detail}</span>
-        </div>
+        <p className="caveat" key={caveat.id}>
+          {caveat.label} <span className="muted">{caveat.detail}</span>
+        </p>
       ))}
 
       {footer}

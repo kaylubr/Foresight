@@ -2,9 +2,9 @@ import type { RepoConnectResult } from "../../shared/types";
 
 function Entry({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="row">
-      <span className="muted">{label}</span>
-      <span className="mono">{value}</span>
+    <div className="entry">
+      <span className="key">{label}</span>
+      <span className="value">{value}</span>
     </div>
   );
 }
@@ -23,8 +23,8 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
   return (
     <>
       {blocked ? (
-        <div className="panel">
-          <h2>Previews are blocked</h2>
+        <div className="group">
+          <h3 className="section-label">Previews are blocked</h3>
           {staticDisqualifiers.submodules ? <p className="caveat">Submodules are present.</p> : null}
           {staticDisqualifiers.lfs ? <p className="caveat">Git LFS filters are present.</p> : null}
           {staticDisqualifiers.linkedWorktrees > 0 ? (
@@ -35,14 +35,13 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
               The repository is mid-{dynamicDisqualifiers.operation}; finish or abort it first.
             </p>
           ) : null}
-          <p className="muted">Reading state is still safe; only rehearsals are refused.</p>
+          <p className="muted">Reading state is still safe. Only rehearsals are refused.</p>
         </div>
       ) : null}
 
-      <div className="panel">
-        <h2>Repository</h2>
+      <div className="group">
+        <h3 className="section-label">State</h3>
         <Entry label="Name" value={repo.name} />
-        <Entry label="Path" value={repo.path} />
         <Entry
           label="HEAD"
           value={
@@ -59,8 +58,8 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
         <Entry label="Ignored files" value={repo.ignored.length} />
       </div>
 
-      <div className="panel">
-        <h2>Refs</h2>
+      <div className="group">
+        <h3 className="section-label">Refs</h3>
         {state.refs.length === 0 ? (
           <p className="muted">No refs yet.</p>
         ) : (
@@ -69,24 +68,24 @@ export default function RepoState({ repo }: { repo: RepoConnectResult }) {
       </div>
 
       {state.stagedEntries.length > 0 ? (
-        <div className="panel">
-          <h2>Staged</h2>
+        <div className="group">
+          <h3 className="section-label">Staged</h3>
           {state.stagedEntries.map((entry) => (
-            <div className="row" key={entry}>
-              <span className="mono">{entry.split("\t")[1]}</span>
-              <span className="mono">{entry.split("\t")[0]}</span>
+            <div className="entry" key={entry}>
+              <span className="mono key">{entry.split("\t")[1]}</span>
+              <span className="value">{entry.split("\t")[0]}</span>
             </div>
           ))}
         </div>
       ) : null}
 
       {state.worktreeEntries.length > 0 ? (
-        <div className="panel">
-          <h2>Working directory</h2>
+        <div className="group">
+          <h3 className="section-label">Working directory</h3>
           {state.worktreeEntries.map((entry) => (
-            <div className="row" key={entry}>
-              <span className="mono">{entry.split("\t")[1]}</span>
-              <span className="mono">{entry.split("\t")[0]}</span>
+            <div className="entry" key={entry}>
+              <span className="mono key">{entry.split("\t")[1]}</span>
+              <span className="value">{entry.split("\t")[0]}</span>
             </div>
           ))}
         </div>
