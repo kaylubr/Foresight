@@ -8,6 +8,10 @@ import { resolveGitDir } from "./repoState";
 
 export const DEAD_ORIGIN = "/foresight/dead-remote";
 
+export function cloneArguments(originPath: string, clonePath: string): string[] {
+  return ["clone", "--quiet", originPath, clonePath];
+}
+
 export interface Mirror {
   root: string;
   path: string;
@@ -70,7 +74,7 @@ export async function createMirror(originPath: string, originState: ModelledStat
   const env = readEnv({ GIT_CONFIG_NOSYSTEM: "1", GIT_TERMINAL_PROMPT: "0" });
   const dispose = (): Promise<void> => rm(root, { recursive: true, force: true });
 
-  const clone = await runGit(["clone", "--local", "--quiet", originPath, clonePath], {
+  const clone = await runGit(cloneArguments(originPath, clonePath), {
     cwd: root,
     env,
     timeoutMs: 120_000
