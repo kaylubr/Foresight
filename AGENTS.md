@@ -10,15 +10,25 @@ See @README.md for project overview and @package.json for available npm/pnpm com
 
 ## Architecture Notes
 
-Foresight is a local Node/TypeScript server (`src/server`) plus a React/D3 frontend (`src/web`). The rehearsal pipeline runs in seven stages:
+Foresight is two npm workspace packages plus one folder of shared types.
 
-1. `repoState.ts` — read Modelled state through git plumbing with `--no-optional-locks`
-2. `parseCommand.ts`, `allowlist.ts`, `guards.ts` — parsed argv (never a shell), alias expansion, subcommand allowlist, `-c` key gate, interactive refusals, untracked/ignored gate
-3. `mirror.ts` — `git clone --local`, sever `origin`, rebuild the index through plumbing rather than copying `.git/index`
-4. `sandbox.ts` — sanitized environment, `unshare -Urn`, a verified network probe, wall-clock timeout, output cap
-5. `classify.ts` — Preview / Conflict stop / Pause stop / Failure / Refusal / Tool error
-6. `diff.ts` — change set, side-effect fingerprints, blocking anomaly
-7. `src/web` — playback of the four Modelled surfaces, one shared outcome panel, side-effect badges in their own region
+- `web` is the React and D3 frontend, scaffolded from the Vite `react-ts` template. `web/src/App.tsx` owns the layout: the command input, then command info beside the commit graph.
+- `server` is the Express backend. `src/index.ts` only listens; `src/app.ts` builds the app, its routes, and the static serving of `web/dist`.
+- `shared` holds the two modules both packages import: `types.ts` and `caveats.ts`.
+
+The backend is organised by domain under `server/src`:
+
+| Folder | Responsibility |
+| --- | --- |
+| `platform/` | process and filesystem primitives (`git.ts`, `fsutil.ts`) |
+| `command/` | the gate: allowlist, tokenizer and argv parsing, guards, failure explanations |
+| `repository/` | reading the repository: modelled state, aliases and identity, disqualifying signals |
+| `rehearsal/` | the throwaway run: mirror, sandbox, outcome classification |
+| `change/` | the diff between before and after, plus the side-effect fingerprints |
+| `session/` | the in-memory session history |
+| `pipeline.ts` | the stages in order, from a pasted command to an outcome |
+
+Run these from the repository root: `npm run dev` (both packages), `npm test` (server suites), `npm run build` (frontend), `npm start` (server, serving the built frontend).
 
 Decisions are recorded in `docs/adr/`; the vocabulary is in `CONTEXT.md`.
 
