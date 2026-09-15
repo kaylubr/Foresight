@@ -246,33 +246,40 @@ export default function App() {
           </>
         ) : (
           <>
-            <div className="field repo-path-field">
-              <div className="control">
-                <input
-                  id="repo-path"
-                  value={repoPath}
-                  placeholder="/home/you/code/project"
-                  autoComplete="off"
-                  spellCheck={false}
-                  onChange={(event) => setRepoPath(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      void connect();
-                    }
-                  }}
-                />
-                <label htmlFor="repo-path">Repository path</label>
+            <div className="connect-row">
+              <div className="field repo-path-field">
+                <div className="control">
+                  <input
+                    id="repo-path"
+                    value={repoPath}
+                    placeholder="/home/you/code/project"
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChange={(event) => setRepoPath(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        void connect();
+                      }
+                    }}
+                  />
+                  <label htmlFor="repo-path">Repository path</label>
+                  <button
+                    type="button"
+                    className="info"
+                    aria-label="Point Foresight at a local Git working copy. It reads the repository to show its state and never writes to it."
+                  >
+                    <span aria-hidden="true">i</span>
+                    <span className="info-tip" role="tooltip">
+                      Point Foresight at a local Git working copy. It reads the repository to show its state
+                      and never writes to it.
+                    </span>
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="actions">
               <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
                 Connect
               </button>
             </div>
-            <p className="empty">
-              Point Foresight at a local Git working copy. It reads the repository to show its state and
-              never writes to it.
-            </p>
           </>
         )}
         {error && !repo ? <p className="error">{error}</p> : null}
