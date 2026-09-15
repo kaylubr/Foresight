@@ -1,7 +1,9 @@
 import type { ReactNode } from "react";
-import type { RehearsalOutcome } from "../../../shared/types";
+import type { ChangeSet, RehearsalOutcome } from "../../../shared/types";
 import { TOOL_ERROR_LABELS } from "../api";
 import ChangeSetView from "./ChangeSetView";
+
+const UNMERGED_PREVIEW = 5;
 
 const KIND_LABELS: Record<RehearsalOutcome["kind"], string> = {
   preview: "Preview",
@@ -18,6 +20,34 @@ function plain(value: string): string {
 
 function short(value: string | null): string {
   return value ? value.slice(0, 7) : "unknown";
+}
+
+function sha(value: string | null): string {
+  return value ? value.slice(0, 7) : "none";
+}
+
+function summaryParts(changeSet: ChangeSet): string[] {
+  const { head } = changeSet;
+  const parts: string[] = [];
+
+  if (
+    head.before !== head.after ||
+    head.commitBefore !== head.commitAfter ||
+    head.detachedBefore !== head.detachedAfter
+  ) {
+    parts.push(`HEAD ${sha(head.commitBefore)} → ${sha(head.commitAfter)}`);
+  }
+  if (changeSet.staged.length > 0) {
+    parts.push(`${changeSet.staged.length} staged`);
+  }
+  if (changeSet.worktree.length > 0) {
+    parts.push(`${changeSet.worktree.length} modified`);
+  }
+  if (changeSet.refs.length > 0) {
+    parts.push(`${changeSet.refs.length} refs moved`);
+  }
+
+  return parts;
 }
 
 function headline(outcome: RehearsalOutcome): string {
@@ -49,12 +79,28 @@ export default function OutcomePanel({
   const showChangeSet =
     outcome.kind === "preview" || outcome.kind === "pause-stop" || outcome.kind === "failure";
 
+  const summary = outcome.changeSet ? summaryParts(outcome.changeSet) : [];
+  const gitOutput =
+    outcome.kind === "failure" || outcome.kind === "tool-error"
+      ? outcome.stderr.trim().slice(0, 2000)
+      : "";
+
   return (
     <div className={`outcome ${outcome.kind}`}>
       <div className="outcome-head">
         <p className="outcome-kind">{KIND_LABELS[outcome.kind]}</p>
         <p className="outcome-command">{outcome.display}</p>
         <h3 className="outcome-headline">{headline(outcome)}</h3>
+        {summary.length > 0 ? (
+          <p className="outcome-summary">
+            {summary.map((part, index) => (
+              <span key={part}>
+                {index > 0 ? <span className="sep">&middot;</span> : null}
+                {part}
+              </span>
+            ))}
+          </p>
+        ) : null}
       </div>
 
       {outcome.fidelityWarnings.length > 0 ? (
@@ -92,10 +138,20 @@ export default function OutcomePanel({
         <div className="detail">
           <h4 className="label">Unmerged paths</h4>
           <ul className="stop-list">
-            {outcome.paths.map((path) => (
+            {outcome.paths.slice(0, UNMERGED_PREVIEW).map((path) => (
               <li key={path}>{path}</li>
             ))}
           </ul>
+          {outcome.paths.length > UNMERGED_PREVIEW ? (
+            <details>
+              <summary>{`+${outcome.paths.length - UNMERGED_PREVIEW} more`}</summary>
+              <ul className="stop-list">
+                {outcome.paths.slice(UNMERGED_PREVIEW).map((path) => (
+                  <li key={path}>{path}</li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
         </div>
       ) : null}
 
@@ -115,23 +171,17 @@ export default function OutcomePanel({
         </div>
       ) : null}
 
-      {outcome.kind === "failure" && outcome.stderr.trim().length > 0 ? (
+      {gitOutput.length > 0 ? (
         <div className="detail">
-          <h4 className="label">git output</h4>
-          <pre className="diagnostic">{outcome.stderr.trim().slice(0, 2000)}</pre>
+          <details>
+            <summary>{`git output — ${gitOutput.split("\n").length} lines`}</summary>
+            <pre className="diagnostic">{gitOutput}</pre>
+          </details>
         </div>
       ) : null}
 
-      {outcome.kind === "tool-error" && outcome.stderr.trim().length > 0 ? (
+      {showChangeSet && outcome.changeSet && !outcome.changeSet.empty ? (
         <div className="detail">
-          <h4 className="label">git output</h4>
-          <pre className="diagnostic">{outcome.stderr.trim().slice(0, 2000)}</pre>
-        </div>
-      ) : null}
-
-      {showChangeSet && outcome.changeSet ? (
-        <div className="detail">
-          <h4 className="label">Change set</h4>
           <ChangeSetView changeSet={outcome.changeSet} />
         </div>
       ) : null}

@@ -358,7 +358,6 @@ export default function App() {
                   ) : null}
                   <div className="actions">
                     <button onClick={() => void copyCommand()}>Copy command</button>
-                    <span className="mono muted">{outcome.display}</span>
                   </div>
                   <p className="copy-note">
                     Foresight has finished rehearsing. Run the command yourself when you are ready.
