@@ -209,14 +209,6 @@ export default function App() {
           <p className={`status ${status.tone}`} role="status">
             {status.text}
           </p>
-          <button
-            className="quiet"
-            onClick={() => void refreshHealth(true)}
-            disabled={busy}
-            aria-label="Re-check sandbox readiness"
-          >
-            Re-check
-          </button>
         </div>
       </header>
 
