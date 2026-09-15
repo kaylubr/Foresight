@@ -1,9 +1,22 @@
 import { CAVEAT_CATALOG } from "../../../shared/caveats";
+import { ROUTE_PATHS } from "../route";
 
 export default function GuaranteesPage() {
   return (
     <section className="section prose">
-      <h1 className="page-title">What Foresight does, and what it guarantees</h1>
+      <header className="page-head">
+        <nav className="breadcrumb" aria-label="Breadcrumb">
+          <ol>
+            <li>
+              <a href={ROUTE_PATHS.workbench}>Foresight</a>
+            </li>
+            <li>
+              <span aria-current="page">Guarantees</span>
+            </li>
+          </ol>
+        </nav>
+        <h1 className="page-title">What Foresight does, and what it guarantees</h1>
+      </header>
       <p>
         Foresight rehearses the command in a throwaway clone. Your actual repository is not modified by the
         rehearsal.
