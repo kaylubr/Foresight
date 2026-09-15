@@ -27,6 +27,7 @@ export const api = {
     const response = await fetch("/api/health");
     return (await response.json()) as HealthResult;
   },
+  probe: (): Promise<HealthResult> => post<HealthResult>("/api/probe", {}),
   connect: (path: string): Promise<RepoConnectResult> => post<RepoConnectResult>("/api/connect", { path }),
   preview: (path: string, command: string, sequence: string | null): Promise<RehearsalOutcome> =>
     post<RehearsalOutcome>("/api/preview", { path, command, sequence }),

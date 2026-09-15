@@ -145,6 +145,12 @@ body {
   color: var(--warn);
 }
 
+.status-block {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
 .section {
   display: flex;
   flex-direction: column;

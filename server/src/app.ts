@@ -9,10 +9,24 @@ import type {
   StalenessRequest
 } from "../../shared/types";
 import { checkStaleness, connectRepo, currentDenialProbe, previewCommand } from "./pipeline";
+import type { DenialProbe } from "./rehearsal/sandbox";
 import { listHistory, recordOutcome } from "./session/history";
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
+}
+
+function toHealth(probe: DenialProbe): HealthResult {
+  return {
+    ok: true,
+    sandbox: {
+      ok: probe.ok,
+      method: probe.sandbox?.kind ?? null,
+      cause: probe.cause,
+      reason: probe.reason,
+      nextStep: probe.nextStep
+    }
+  };
 }
 
 export function createApp(): express.Express {
@@ -21,22 +35,11 @@ export function createApp(): express.Express {
   app.use(express.json({ limit: "256kb" }));
 
   app.get("/api/health", async (_request, response) => {
-    const probe = await currentDenialProbe();
-    const payload: HealthResult = {
-      ok: true,
-      sandbox: {
-        ok: probe.ok,
-        method: probe.sandbox?.kind ?? null,
-        cause: probe.cause,
-        reason: probe.reason,
-        nextStep: probe.nextStep
-      }
-    };
-    response.json(payload);
+    response.json(toHealth(await currentDenialProbe()));
   });
 
   app.post("/api/probe", async (_request, response) => {
-    response.json(await currentDenialProbe(true));
+    response.json(toHealth(await currentDenialProbe(true)));
   });
 
   app.post("/api/connect", async (request, response) => {

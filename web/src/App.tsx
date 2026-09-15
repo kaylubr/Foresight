@@ -16,6 +16,8 @@ function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
 }
 
+type Activity = "connect" | "refresh" | "rehearse";
+
 export default function App() {
   const [repoPath, setRepoPath] = useState("");
   const [repo, setRepo] = useState<RepoConnectResult | null>(null);
@@ -25,20 +27,50 @@ export default function App() {
   const [health, setHealth] = useState<HealthResult | null>(null);
   const [staleness, setStaleness] = useState<StalenessResult | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  const [busy, setBusy] = useState(false);
+  const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [healthChecked, setHealthChecked] = useState(false);
+
+  const busy = activity !== null;
+
+  const refreshHealth = useCallback(async (force: boolean) => {
+    try {
+      setHealth(force ? await api.probe() : await api.health());
+    } catch {
+      setHealth(null);
+    } finally {
+      setHealthChecked(true);
+    }
+  }, []);
 
   useEffect(() => {
-    api
-      .health()
-      .then(setHealth)
-      .catch(() => setHealth(null));
-  }, []);
+    const load = async () => {
+      await refreshHealth(false);
+    };
+    void load();
+  }, [refreshHealth]);
+
+  useEffect(() => {
+    const recheck = () => {
+      void refreshHealth(true);
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        recheck();
+      }
+    };
+    window.addEventListener("focus", recheck);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", recheck);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshHealth]);
 
   const needsSequence = /^\s*git\s+rebase\b/.test(command) && /\s(-i|--interactive)\b/.test(command);
 
   const connect = useCallback(async () => {
-    setBusy(true);
+    setActivity("connect");
     setError(null);
     try {
       const result = await api.connect(repoPath);
@@ -50,7 +82,7 @@ export default function App() {
     } catch (caught) {
       setError(describe(caught));
     } finally {
-      setBusy(false);
+      setActivity(null);
     }
   }, [repoPath]);
 
@@ -58,8 +90,13 @@ export default function App() {
     if (!repo) {
       return;
     }
-    const result = await api.connect(repo.path);
-    setRepo(result);
+    setActivity("refresh");
+    try {
+      const result = await api.connect(repo.path);
+      setRepo(result);
+    } finally {
+      setActivity(null);
+    }
   }, [repo]);
 
   const runPreview = useCallback(async () => {
@@ -67,7 +104,7 @@ export default function App() {
       setError("Connect a repository before rehearsing a command against it.");
       return;
     }
-    setBusy(true);
+    setActivity("rehearse");
     setError(null);
     setStaleness(null);
     try {
@@ -78,15 +115,21 @@ export default function App() {
       );
       setOutcome(result);
       setHistory(await api.history());
+      if (
+        result.kind === "tool-error" &&
+        (result.cause === "sandbox-unavailable" || result.cause === "network-reachable")
+      ) {
+        void refreshHealth(true);
+      }
       if (result.originSnapshot) {
         setStaleness(await api.staleness(repo.path, result.originSnapshot.state));
       }
     } catch (caught) {
       setError(describe(caught));
     } finally {
-      setBusy(false);
+      setActivity(null);
     }
-  }, [repo, command, needsSequence, sequence]);
+  }, [repo, command, needsSequence, sequence, refreshHealth]);
 
   const copyCommand = useCallback(async () => {
     if (!outcome) {
@@ -100,13 +143,20 @@ export default function App() {
 
   const sandboxReady = health?.sandbox.ok ?? false;
 
-  const status = busy
-    ? { tone: "busy", text: "Rehearsing. Building the clone and running the command." }
-    : !health
-      ? { tone: "blocked", text: "Foresight cannot reach its own API." }
-      : !sandboxReady
-        ? { tone: "blocked", text: `Rehearsals unavailable: ${health.sandbox.reason}` }
-        : { tone: "ready", text: `Network denied to the command (${health.sandbox.method}).` };
+  const status =
+    activity === "connect"
+      ? { tone: "busy", text: "Connecting to the repository…" }
+      : activity === "refresh"
+        ? { tone: "busy", text: "Re-reading the repository state…" }
+        : activity === "rehearse"
+          ? { tone: "busy", text: "Rehearsing. Building the clone and running the command." }
+          : !healthChecked
+            ? { tone: "busy", text: "Checking sandbox readiness…" }
+            : health === null
+              ? { tone: "blocked", text: "Foresight cannot reach its own API." }
+              : !sandboxReady
+                ? { tone: "blocked", text: `Rehearsals unavailable: ${health.sandbox.reason}` }
+                : { tone: "ready", text: "Ready" };
 
   const summary: string[] = [];
   if (repo) {
@@ -136,9 +186,19 @@ export default function App() {
     <div className="page">
       <header className="masthead">
         <h1 className="brand">Foresight</h1>
-        <p className={`status ${status.tone}`} role="status">
-          {status.text}
-        </p>
+        <div className="status-block">
+          <p className={`status ${status.tone}`} role="status">
+            {status.text}
+          </p>
+          <button
+            className="quiet"
+            onClick={() => void refreshHealth(true)}
+            disabled={busy}
+            aria-label="Re-check sandbox readiness"
+          >
+            Re-check
+          </button>
+        </div>
       </header>
 
       <section className="section">
