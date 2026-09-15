@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { CAVEAT_CATALOG } from "../../shared/caveats";
 import type {
   HealthResult,
   HistoryEntry,
@@ -9,8 +8,10 @@ import type {
 } from "../../shared/types";
 import { api } from "./api";
 import CommitGraph from "./components/CommitGraph";
+import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
 import RepoState from "./components/RepoState";
+import { ROUTE_PATHS, useRoute } from "./route";
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
@@ -30,6 +31,7 @@ export default function App() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healthChecked, setHealthChecked] = useState(false);
+  const route = useRoute();
 
   const busy = activity !== null;
 
@@ -66,6 +68,10 @@ export default function App() {
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [refreshHealth]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [route]);
 
   const needsSequence = /^\s*git\s+rebase\b/.test(command) && /\s(-i|--interactive)\b/.test(command);
 
@@ -185,7 +191,17 @@ export default function App() {
   return (
     <div className="page">
       <header className="masthead">
-        <h1 className="brand">Foresight</h1>
+        <div className="masthead-left">
+          <h1 className="brand">Foresight</h1>
+          <nav className="nav" aria-label="Pages">
+            <a href={ROUTE_PATHS.workbench} aria-current={route === "workbench" ? "page" : undefined}>
+              Rehearsal
+            </a>
+            <a href={ROUTE_PATHS.guarantees} aria-current={route === "guarantees" ? "page" : undefined}>
+              Guarantees
+            </a>
+          </nav>
+        </div>
         <div className="status-block">
           <p className={`status ${status.tone}`} role="status">
             {status.text}
@@ -201,6 +217,10 @@ export default function App() {
         </div>
       </header>
 
+      {route === "guarantees" ? (
+        <GuaranteesPage />
+      ) : (
+        <>
       <section className="section">
         {repo ? (
           <>
@@ -370,39 +390,8 @@ export default function App() {
         </section>
       </div>
 
-      <section className="disclosure">
-        <h2 className="label">What Foresight does, and what it guarantees</h2>
-        <p>
-          Foresight rehearses the command in a throwaway clone. Your actual repository is not modified by
-          the rehearsal.
-        </p>
-        <p className="guarantee">
-          It guarantees one thing: Git&apos;s own object-store-rewriting commands, executed in the clone,
-          cannot alter your repository&apos;s object bytes. It is not a general security sandbox, and it
-          does not contain shell execution, filesystem writes or network access as a general capability.
-        </p>
-
-        {outcome && outcome.caveats.length > 0 ? (
-          <div className="detail">
-            <h3 className="label">Caveats that apply to this result</h3>
-            {outcome.caveats.map((caveat) => (
-              <p className="caveat-item" key={caveat.id}>
-                <span className="name">{caveat.label}</span> {caveat.detail}
-              </p>
-            ))}
-          </div>
-        ) : null}
-
-        <details>
-          <summary>All known caveats</summary>
-          {Object.entries(CAVEAT_CATALOG).map(([id, entry]) => (
-            <p className="caveat-item" key={id}>
-              <span className="name">{entry.label}</span> {entry.detail}
-            </p>
-          ))}
-        </details>
-
-        {history.length > 0 ? (
+      {history.length > 0 ? (
+        <section className="section">
           <details>
             <summary>Session history ({history.length})</summary>
             {history
@@ -414,8 +403,10 @@ export default function App() {
                 </p>
               ))}
           </details>
-        ) : null}
-      </section>
+        </section>
+      ) : null}
+        </>
+      )}
     </div>
   );
 }

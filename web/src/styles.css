@@ -99,6 +99,13 @@ body {
   color: var(--text-faint);
 }
 
+.page-title {
+  margin: 0;
+  font-size: var(--t-outcome);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
 .page {
   display: flex;
   flex-direction: column;
@@ -122,6 +129,29 @@ body {
   font-weight: 600;
   letter-spacing: 0.3em;
   text-transform: uppercase;
+}
+
+.masthead-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-9);
+}
+
+.nav {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.nav a {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.nav a:hover,
+.nav a[aria-current="page"] {
+  color: var(--text);
 }
 
 .status {
@@ -631,23 +661,14 @@ button.quiet:hover:not(:disabled) {
   color: var(--text-muted);
 }
 
-.disclosure {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  margin-top: var(--space-9);
-  padding-top: var(--space-9);
-  border-top: 1px solid var(--line);
-}
-
-.disclosure p {
+.prose p {
   margin: 0;
   max-width: 74ch;
   font-size: var(--t-body);
   color: var(--text-muted);
 }
 
-.disclosure .guarantee {
+.prose .guarantee {
   font-family: var(--font-mono);
   font-size: var(--t-label);
   line-height: 1.6;

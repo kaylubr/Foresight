@@ -164,6 +164,17 @@ export default function OutcomePanel({
         </div>
       ) : null}
 
+      {outcome.caveats.length > 0 ? (
+        <div className="detail">
+          <h4 className="label">Caveats that apply to this result</h4>
+          {outcome.caveats.map((caveat) => (
+            <p className="caveat-item" key={caveat.id}>
+              <span className="name">{caveat.label}</span> {caveat.detail}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
       {footer}
     </div>
   );
