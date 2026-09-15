@@ -154,23 +154,24 @@ body {
 .masthead {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
 .brand {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-body);
-  font-weight: 600;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+}
+
+.brand img {
+  display: block;
+  height: 24px;
+  width: auto;
 }
 
 .masthead-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-9);
 }
 
@@ -770,7 +771,7 @@ details > summary:hover {
     font-size: var(--t-outcome);
   }
 
-  .brand {
-    letter-spacing: 0.2em;
+  .brand img {
+    height: 20px;
   }
 }

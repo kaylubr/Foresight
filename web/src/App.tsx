@@ -7,6 +7,7 @@ import type {
   StalenessResult
 } from "../../shared/types";
 import { api } from "./api";
+import brandUrl from "./assets/brand.svg";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
@@ -192,7 +193,9 @@ export default function App() {
     <div className="page">
       <header className="masthead">
         <div className="masthead-left">
-          <h1 className="brand">Foresight</h1>
+          <h1 className="brand">
+            <img src={brandUrl} alt="Foresight" />
+          </h1>
           <nav className="nav" aria-label="Pages">
             <a href={ROUTE_PATHS.workbench} aria-current={route === "workbench" ? "page" : undefined}>
               Rehearsal
