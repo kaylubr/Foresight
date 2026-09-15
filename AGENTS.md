@@ -34,4 +34,5 @@ Decisions are recorded in `docs/adr/`; the vocabulary is in `CONTEXT.md`.
 
 ## Common Workflows
 - Commits should be atomic, 1 commit per 1 task
+- Never add a co-author trailer (such as `Co-authored-by:`) to a commit message, and strip any that are present
 - Do not use comments
