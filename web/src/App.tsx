@@ -305,6 +305,16 @@ export default function App() {
               }}
             />
             <label htmlFor="command">Command</label>
+            <button
+              type="button"
+              className="info"
+              aria-label="Runs in a throwaway clone. Your repository is not modified by the rehearsal."
+            >
+              <span aria-hidden="true">i</span>
+              <span className="info-tip" role="tooltip">
+                Runs in a throwaway clone. Your repository is not modified by the rehearsal.
+              </span>
+            </button>
           </div>
         </div>
 
@@ -331,9 +341,6 @@ export default function App() {
           <button className="primary" onClick={() => void runPreview()} disabled={busy}>
             Rehearse
           </button>
-          <span className="muted">
-            Runs in a throwaway clone. Your repository is not modified by the rehearsal.
-          </span>
         </div>
         {error && repo ? <p className="error">{error}</p> : null}
       </section>

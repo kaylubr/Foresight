@@ -334,6 +334,10 @@ body {
   min-width: 0;
 }
 
+.editor .info {
+  right: 0;
+}
+
 .editor input {
   width: 100%;
   font-family: var(--font-mono);
@@ -342,7 +346,7 @@ body {
   color: var(--text);
   background: transparent;
   border: 0;
-  padding: 0;
+  padding: 0 40px 0 0;
 }
 
 .editor input::placeholder {
