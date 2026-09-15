@@ -311,6 +311,7 @@ body {
   align-items: baseline;
   gap: var(--space-4);
   border-bottom: 2px solid var(--control);
+  padding-top: 18px;
   padding-bottom: 4px;
 }
 
@@ -325,9 +326,13 @@ body {
   user-select: none;
 }
 
-.editor input {
+.editor .control {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.editor input {
+  width: 100%;
   font-family: var(--font-mono);
   font-size: var(--t-command);
   line-height: 1.35;
@@ -338,6 +343,10 @@ body {
 }
 
 .editor input::placeholder {
+  color: transparent;
+}
+
+.editor input:focus::placeholder {
   color: var(--text-faint);
 }
 
@@ -352,11 +361,84 @@ body {
   gap: var(--space-1);
 }
 
-.field label {
+.control {
+  position: relative;
+}
+
+.control label {
+  position: absolute;
+  pointer-events: none;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    top 0.15s ease,
+    font-size 0.15s ease,
+    transform 0.15s ease;
+}
+
+.field .control input,
+.field .control textarea {
+  display: block;
+}
+
+.field .control label {
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
   font-family: var(--font-mono);
+  font-size: var(--t-body);
+  color: var(--text-faint);
+}
+
+.editor .control label {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--t-command);
+  color: var(--text-faint);
+}
+
+.field .control input:focus + label,
+.field .control input:not(:placeholder-shown) + label,
+.field .control textarea:focus + label,
+.field .control textarea:not(:placeholder-shown) + label {
+  top: 6px;
+  transform: none;
   font-size: var(--t-label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.field.repo-path-field .control input {
+  padding: 26px 16px 8px;
+}
+
+.field.repo-path-field .control label {
+  left: 17px;
+}
+
+.field.repo-path-field .control input:focus + label,
+.field.repo-path-field .control input:not(:placeholder-shown) + label {
+  top: 10px;
+}
+
+.editor .control input:focus + label,
+.editor .control input:not(:placeholder-shown) + label {
+  top: 0;
+  transform: translateY(-100%);
+  font-size: var(--t-label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.field .control input::placeholder,
+.field .control textarea::placeholder {
+  color: transparent;
+}
+
+.field .control input:focus::placeholder,
+.field .control textarea:focus::placeholder {
   color: var(--text-faint);
 }
 
@@ -368,8 +450,8 @@ body {
   background: var(--field);
   border: 1px solid var(--control);
   border-radius: var(--radius);
-  padding: 10px;
-  min-height: 44px;
+  padding: 22px 10px 8px;
+  min-height: 56px;
   width: 100%;
 }
 
@@ -767,7 +849,8 @@ details > summary:hover {
   }
 
   .prompt,
-  .editor input {
+  .editor input,
+  .editor .control label {
     font-size: var(--t-outcome);
   }
 

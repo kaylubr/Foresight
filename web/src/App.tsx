@@ -254,21 +254,23 @@ export default function App() {
           </>
         ) : (
           <>
-            <div className="field">
-              <label htmlFor="repo-path">Repository path</label>
-              <input
-                id="repo-path"
-                value={repoPath}
-                placeholder="/home/you/code/project"
-                autoComplete="off"
-                spellCheck={false}
-                onChange={(event) => setRepoPath(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    void connect();
-                  }
-                }}
-              />
+            <div className="field repo-path-field">
+              <div className="control">
+                <input
+                  id="repo-path"
+                  value={repoPath}
+                  placeholder="/home/you/code/project"
+                  autoComplete="off"
+                  spellCheck={false}
+                  onChange={(event) => setRepoPath(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      void connect();
+                    }
+                  }}
+                />
+                <label htmlFor="repo-path">Repository path</label>
+              </div>
             </div>
             <div className="actions">
               <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
@@ -285,39 +287,41 @@ export default function App() {
       </section>
 
       <section className="section">
-        <label className="label" htmlFor="command">
-          Command
-        </label>
         <div className="editor">
           <span className="prompt" aria-hidden="true">
             $
           </span>
-          <input
-            id="command"
-            value={command}
-            placeholder="git reset --soft HEAD~1"
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(event) => setCommand(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                void runPreview();
-              }
-            }}
-          />
+          <div className="control">
+            <input
+              id="command"
+              value={command}
+              placeholder="git reset --soft HEAD~1"
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => setCommand(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  void runPreview();
+                }
+              }}
+            />
+            <label htmlFor="command">Command</label>
+          </div>
         </div>
 
         {needsSequence ? (
           <div className="field">
-            <label htmlFor="sequence">Interactive rebase todo</label>
-            <textarea
-              id="sequence"
-              rows={4}
-              value={sequence}
-              aria-describedby="sequence-hint"
-              placeholder={"pick abc123 subject\nsquash def456 subject"}
-              onChange={(event) => setSequence(event.target.value)}
-            />
+            <div className="control">
+              <textarea
+                id="sequence"
+                rows={4}
+                value={sequence}
+                aria-describedby="sequence-hint"
+                placeholder={"pick abc123 subject\nsquash def456 subject"}
+                onChange={(event) => setSequence(event.target.value)}
+              />
+              <label htmlFor="sequence">Interactive rebase todo</label>
+            </div>
             <p className="muted" id="sequence-hint">
               Leave empty to keep git&apos;s own todo list, which picks every commit.
             </p>
