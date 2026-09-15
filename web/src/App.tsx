@@ -12,7 +12,7 @@ import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
 import RepoState from "./components/RepoState";
-import { ROUTE_PATHS, useRoute } from "./route";
+import { PageLink, ROUTE_PATHS, useRoute } from "./route";
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
@@ -197,12 +197,12 @@ export default function App() {
             <img src={brandUrl} alt="Foresight" />
           </h1>
           <nav className="nav" aria-label="Pages">
-            <a href={ROUTE_PATHS.workbench} aria-current={route === "workbench" ? "page" : undefined}>
+            <PageLink to={ROUTE_PATHS.workbench} current={route === "workbench"}>
               Rehearsal
-            </a>
-            <a href={ROUTE_PATHS.guarantees} aria-current={route === "guarantees" ? "page" : undefined}>
+            </PageLink>
+            <PageLink to={ROUTE_PATHS.guarantees} current={route === "guarantees"}>
               Guarantees
-            </a>
+            </PageLink>
           </nav>
         </div>
         <div className="status-block">

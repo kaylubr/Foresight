@@ -1,5 +1,5 @@
 import { CAVEAT_CATALOG } from "../../../shared/caveats";
-import { ROUTE_PATHS } from "../route";
+import { PageLink, ROUTE_PATHS } from "../route";
 
 export default function GuaranteesPage() {
   return (
@@ -8,7 +8,7 @@ export default function GuaranteesPage() {
         <nav className="breadcrumb" aria-label="Breadcrumb">
           <ol>
             <li>
-              <a href={ROUTE_PATHS.workbench}>Foresight</a>
+              <PageLink to={ROUTE_PATHS.workbench}>Foresight</PageLink>
             </li>
             <li>
               <span aria-current="page">Guarantees</span>
