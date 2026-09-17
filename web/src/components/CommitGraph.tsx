@@ -1,12 +1,12 @@
-import { curveBumpX, line } from "d3";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { curveBumpY, line } from "d3";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { CommitNode, GraphData, RefChange } from "../../../shared/types";
 
-const ROW_HEIGHT = 26;
-const LANE_WIDTH = 16;
+const COLUMN_WIDTH = 38;
+const LANE_HEIGHT = 26;
 const RADIUS = 5;
 const PADDING = 14;
-const LABEL_WIDTH = 300;
+const LABEL_PAD = 130;
 const LANE_TONES = [0.82, 0.66, 0.54, 0.46, 0.4];
 
 type NodeState = "present" | "added" | "removed";
@@ -16,6 +16,12 @@ interface Row {
   lane: number;
   index: number;
   state: NodeState;
+}
+
+interface Hovered {
+  sha: string;
+  left: number;
+  top: number;
 }
 
 function layout(commits: CommitNode[]): Array<Omit<Row, "state">> {
@@ -69,6 +75,21 @@ function fullRefName(decoration: string): string {
   return `refs/heads/${cleaned}`;
 }
 
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReduced(query.matches);
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+
+  return reduced;
+}
+
 export default function CommitGraph({
   before,
   after,
@@ -80,6 +101,7 @@ export default function CommitGraph({
 }) {
   const target = after ?? before;
   const hasChanges = after !== null && after !== before;
+  const reduced = useReducedMotion();
 
   const beforeShas = useMemo(() => new Set(before.commits.map((c) => c.sha)), [before]);
   const afterShas = useMemo(() => new Set(target.commits.map((c) => c.sha)), [target]);
@@ -104,9 +126,18 @@ export default function CommitGraph({
 
   const [revealed, setRevealed] = useState(true);
   const [replayToken, setReplayToken] = useState(0);
+  const [hovered, setHovered] = useState<Hovered | null>(null);
+  const graphRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!hasChanges) {
+    const element = graphRef.current;
+    if (element) {
+      element.scrollLeft = element.scrollWidth;
+    }
+  }, [rows.length, hasChanges]);
+
+  useEffect(() => {
+    if (!hasChanges || reduced) {
       setRevealed(true);
       return;
     }
@@ -123,23 +154,24 @@ export default function CommitGraph({
       cancelled = true;
       cancelAnimationFrame(frame);
     };
-  }, [hasChanges, before, after, replayToken]);
+  }, [hasChanges, before, after, replayToken, reduced]);
 
   const replay = useCallback(() => setReplayToken((token) => token + 1), []);
 
   const laneCount = useMemo(() => Math.max(1, ...rows.map((row) => row.lane + 1)), [rows]);
   const rowIndex = useMemo(() => new Map(rows.map((row) => [row.commit.sha, row])), [rows]);
 
-  const width = PADDING * 2 + laneCount * LANE_WIDTH + LABEL_WIDTH;
-  const height = rows.length * ROW_HEIGHT + PADDING * 2;
+  const width = PADDING * 2 + LABEL_PAD * 2 + rows.length * COLUMN_WIDTH;
+  const height = PADDING * 2 + laneCount * LANE_HEIGHT;
 
-  const x = (lane: number): number => PADDING + lane * LANE_WIDTH + LANE_WIDTH / 2;
-  const y = (index: number): number => PADDING + index * ROW_HEIGHT + ROW_HEIGHT / 2;
+  const x = (index: number): number =>
+    PADDING + LABEL_PAD + (rows.length - 1 - index) * COLUMN_WIDTH + COLUMN_WIDTH / 2;
+  const y = (lane: number): number => PADDING + lane * LANE_HEIGHT + LANE_HEIGHT / 2;
 
   const link = line<[number, number]>()
     .x((point) => point[0])
     .y((point) => point[1])
-    .curve(curveBumpX);
+    .curve(curveBumpY);
 
   const opacityFor = (state: NodeState): number => {
     if (state === "added") {
@@ -155,6 +187,12 @@ export default function CommitGraph({
 
   const headCommit = revealed ? (target.head?.commit ?? null) : (before.head?.commit ?? null);
   const headRow = headCommit ? rowIndex.get(headCommit) : undefined;
+  const tipRow = hovered ? rowIndex.get(hovered.sha) : undefined;
+
+  const showTip = (event: MouseEvent<SVGGElement>, sha: string) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setHovered({ sha, left: rect.left + rect.width / 2, top: rect.bottom });
+  };
 
   return (
     <div className="graph-wrap">
@@ -168,12 +206,12 @@ export default function CommitGraph({
           </button>
         </div>
       ) : null}
-      <div className="graph">
+      <div className="graph" ref={graphRef} onMouseLeave={() => setHovered(null)}>
         <svg
           width={width}
           height={height}
           role="img"
-          aria-label="Commit graph, before and after the rehearsal"
+          aria-label="Commit graph, history running left to right from oldest to newest. The commit list below carries every commit's sha, refs and subject."
         >
           {rows.map((row) =>
             row.commit.parents.map((parent, parentPosition) => {
@@ -182,20 +220,20 @@ export default function CommitGraph({
                 return null;
               }
               const path = link([
-                [x(row.lane), y(row.index)],
-                [x(parentRow.lane), y(parentRow.index)]
+                [x(row.index), y(row.lane)],
+                [x(parentRow.index), y(parentRow.lane)]
               ]);
               const edgeTone = LANE_TONES[parentRow.lane % LANE_TONES.length];
               return (
                 <path
                   key={`edge-${row.commit.sha}-${parentPosition}`}
+                  className="graph-edge"
                   d={path ?? ""}
                   fill="none"
                   stroke={`oklch(${edgeTone} 0 0)`}
                   strokeWidth={1}
                   style={{
-                    opacity: Math.min(opacityFor(row.state), opacityFor(parentRow.state)) * 0.55,
-                    transition: "opacity 320ms ease"
+                    opacity: Math.min(opacityFor(row.state), opacityFor(parentRow.state)) * 0.55
                   }}
                 />
               );
@@ -205,10 +243,11 @@ export default function CommitGraph({
           {rows.map((row) => (
             <g
               key={`node-${row.commit.sha}`}
+              className="graph-node"
+              onMouseEnter={(event) => showTip(event, row.commit.sha)}
               style={{
-                transform: `translate(${x(row.lane)}px, ${y(row.index)}px) scale(${scaleFor(row.state)})`,
-                opacity: opacityFor(row.state),
-                transition: "opacity 320ms ease, transform 320ms cubic-bezier(0.16, 1, 0.3, 1)"
+                transform: `translate(${x(row.index)}px, ${y(row.lane)}px) scale(${scaleFor(row.state)})`,
+                opacity: opacityFor(row.state)
               }}
             >
               <circle
@@ -220,10 +259,8 @@ export default function CommitGraph({
 
           {headRow ? (
             <g
-              style={{
-                transform: `translate(${x(headRow.lane)}px, ${y(headRow.index)}px)`,
-                transition: "transform 420ms cubic-bezier(0.16, 1, 0.3, 1)"
-              }}
+              className="graph-head"
+              style={{ transform: `translate(${x(headRow.index)}px, ${y(headRow.lane)}px)` }}
             >
               <circle r={RADIUS + 3.5} fill="none" stroke="oklch(0.96 0 0)" strokeWidth={1.5} />
             </g>
@@ -231,18 +268,20 @@ export default function CommitGraph({
 
           {rows.map((row) => {
             const isHead = headCommit === row.commit.sha;
+            if (row.commit.refs.length === 0 && !isHead) {
+              return null;
+            }
             return (
               <g
                 key={`label-${row.commit.sha}`}
-                style={{
-                  opacity: opacityFor(row.state),
-                  transition: "opacity 320ms ease"
-                }}
+                className="graph-label"
+                style={{ opacity: opacityFor(row.state) }}
               >
                 <text
-                  x={PADDING + laneCount * LANE_WIDTH + 12}
-                  y={y(row.index) + 4}
-                  style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}
+                  x={x(row.index)}
+                  y={y(row.lane) - RADIUS - 6}
+                  textAnchor="middle"
+                  style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}
                 >
                   {isHead ? <tspan style={{ fill: "oklch(0.96 0 0)" }}>HEAD </tspan> : null}
                   {row.commit.refs.map((decoration) => {
@@ -261,14 +300,63 @@ export default function CommitGraph({
                       </tspan>
                     );
                   })}
-                  <tspan style={{ fill: "oklch(0.6 0 0)" }}>{row.commit.sha.slice(0, 7)} </tspan>
-                  <tspan style={{ fill: "oklch(0.74 0 0)" }}>{row.commit.subject.slice(0, 40)}</tspan>
                 </text>
               </g>
             );
           })}
         </svg>
+        {hovered && tipRow ? (
+          <div className="graph-tip" style={{ left: hovered.left, top: hovered.top }}>
+            <span className="sha">{hovered.sha.slice(0, 7)}</span>
+            <span>{tipRow.commit.subject}</span>
+            {tipRow.state === "present" ? null : (
+              <span className={`state ${tipRow.state}`}>{tipRow.state}</span>
+            )}
+          </div>
+        ) : null}
       </div>
+
+      <details className="graph-list">
+        <summary>Commits ({rows.length})</summary>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Commit</th>
+              <th scope="col">Refs</th>
+              <th scope="col">Subject</th>
+              <th scope="col">State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.commit.sha}>
+                <td className="sha">{row.commit.sha.slice(0, 7)}</td>
+                <td>
+                  {row.commit.refs.length === 0
+                    ? "none"
+                    : row.commit.refs.map((decoration) => {
+                        const change = moved.get(fullRefName(decoration));
+                        return (
+                          <span key={decoration}>
+                            {decoration}
+                            {change ? (
+                              <span className="ref-change">
+                                {change.after
+                                  ? ` \u2192 ${change.after.slice(0, 7)}`
+                                  : " \u2192 deleted"}
+                              </span>
+                            ) : null}{" "}
+                          </span>
+                        );
+                      })}
+                </td>
+                <td className="subject">{row.commit.subject}</td>
+                <td className={`state ${row.state}`}>{row.state}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
     </div>
   );
 }

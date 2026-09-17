@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   HealthResult,
   HistoryEntry,
@@ -32,6 +32,8 @@ export default function App() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healthChecked, setHealthChecked] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const copyTimer = useRef<number | null>(null);
   const route = useRoute();
 
   const busy = activity !== null;
@@ -73,6 +75,18 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [route]);
+
+  useEffect(() => {
+    setCopyStatus("idle");
+  }, [outcome]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimer.current !== null) {
+        window.clearTimeout(copyTimer.current);
+      }
+    };
+  }, []);
 
   const needsSequence = /^\s*git\s+rebase\b/.test(command) && /\s(-i|--interactive)\b/.test(command);
 
@@ -142,7 +156,17 @@ export default function App() {
     if (!outcome) {
       return;
     }
-    await navigator.clipboard.writeText(outcome.display);
+    try {
+      await navigator.clipboard.writeText(outcome.display);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("failed");
+      return;
+    }
+    if (copyTimer.current !== null) {
+      window.clearTimeout(copyTimer.current);
+    }
+    copyTimer.current = window.setTimeout(() => setCopyStatus("idle"), 2400);
     if (repo && outcome.originSnapshot) {
       setStaleness(await api.staleness(repo.path, outcome.originSnapshot.state));
     }
@@ -167,11 +191,15 @@ export default function App() {
 
   const summary: string[] = [];
   if (repo) {
+    const branches = repo.state.refs.filter((ref) => ref.name.startsWith("refs/heads/")).length;
+    const tags = repo.state.refs.filter((ref) => ref.name.startsWith("refs/tags/")).length;
     summary.push(
       repo.state.head.detached
         ? `detached at ${repo.state.head.commit?.slice(0, 7) ?? "unborn"}`
-        : (repo.state.head.symbolic?.replace("refs/heads/", "") ?? "unborn")
+        : `${repo.state.head.symbolic?.replace("refs/heads/", "") ?? "unborn"} @ ${repo.state.head.commit?.slice(0, 7) ?? "none"}`
     );
+    summary.push(`${branches} branch${branches === 1 ? "" : "es"}`);
+    summary.push(`${tags} tag${tags === 1 ? "" : "s"}`);
     summary.push(`${repo.state.stagedEntries.length} staged`);
     summary.push(`${repo.state.worktreeEntries.length} modified`);
     summary.push(`${repo.untracked.length} untracked`);
@@ -190,7 +218,7 @@ export default function App() {
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
   return (
-    <div className="page">
+    <div className={route === "guarantees" ? "page" : "page workbench"}>
       <header className="masthead">
         <div className="masthead-left">
           <h1 className="brand">
@@ -216,10 +244,21 @@ export default function App() {
         <GuaranteesPage />
       ) : (
         <>
+      <div className="workbench-controls">
       <section className="section">
         {repo ? (
           <>
-            <p className="repo-path">{repo.path}</p>
+            <div className="repo-head">
+              <p className="repo-path">{repo.path}</p>
+              <div className="actions">
+                <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
+                  Refresh state
+                </button>
+                <button className="quiet" onClick={() => setRepo(null)}>
+                  Change repository
+                </button>
+              </div>
+            </div>
             <p className="repo-summary">
               {summary.map((part, index) => (
                 <span key={part}>
@@ -234,14 +273,6 @@ export default function App() {
             repo.dynamicDisqualifiers.operation ? (
               <p className="repo-summary blocked">Previews are blocked for this repository.</p>
             ) : null}
-            <div className="actions">
-              <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
-                Refresh state
-              </button>
-              <button className="quiet" onClick={() => setRepo(null)}>
-                Change repository
-              </button>
-            </div>
             <RepoState repo={repo} />
           </>
         ) : (
@@ -344,43 +375,10 @@ export default function App() {
         </div>
         {error && repo ? <p className="error">{error}</p> : null}
       </section>
+      </div>
 
       <div className="workspace">
-        <section className="pane" aria-label="Command info">
-          <h2 className="label">Command info</h2>
-          {outcome ? (
-            <OutcomePanel
-              outcome={outcome}
-              footer={
-                <>
-                  {staleness?.stale ? (
-                    <div className="detail">
-                      <h4 className="label">Stale</h4>
-                      <p className="muted">
-                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
-                        for an accurate result.
-                      </p>
-                    </div>
-                  ) : null}
-                  <div className="actions">
-                    <button onClick={() => void copyCommand()}>Copy command</button>
-                  </div>
-                  <p className="copy-note">
-                    Foresight has finished rehearsing. Run the command yourself when you are ready.
-                  </p>
-                </>
-              }
-            />
-          ) : (
-            <p className="empty">
-              Enter a Git command above and rehearse it to see exactly what it would change. Foresight
-              clones the repository, mirrors your staged and unstaged state, runs the command in the
-              clone, and reports the difference.
-            </p>
-          )}
-        </section>
-
-        <section className="pane" aria-label="Commit graph">
+        <section className="pane graph-pane" aria-label="Commit graph">
           <h2 className="label">Commit graph</h2>
           {repo && repo.graph.commits.length > 0 ? (
             <>
@@ -398,6 +396,44 @@ export default function App() {
             </>
           ) : (
             <p className="empty">Connect a repository to see its commit graph.</p>
+          )}
+        </section>
+
+        <section className="pane info-pane" aria-label="Command info">
+          <h2 className="label">Command info</h2>
+          {outcome ? (
+            <OutcomePanel
+              outcome={outcome}
+              footer={
+                <>
+                  {staleness?.stale ? (
+                    <div className="detail">
+                      <h4 className="label">Stale</h4>
+                      <p className="muted">
+                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
+                        for an accurate result.
+                      </p>
+                    </div>
+                  ) : null}
+                  <div className="actions">
+                    <button onClick={() => void copyCommand()}>Copy command</button>
+                    <span className={`copy-status ${copyStatus}`} role="status">
+                      {copyStatus === "copied"
+                        ? "Copied to clipboard"
+                        : copyStatus === "failed"
+                          ? "Could not copy"
+                          : ""}
+                    </span>
+                  </div>
+                </>
+              }
+            />
+          ) : (
+            <p className="empty">
+              Enter a Git command above and rehearse it to see exactly what it would change. Foresight
+              clones the repository, mirrors your staged and unstaged state, runs the command in the
+              clone, and reports the difference.
+            </p>
           )}
         </section>
       </div>

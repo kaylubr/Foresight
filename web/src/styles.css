@@ -151,6 +151,31 @@ body {
   padding: var(--space-9) var(--space-4) 72px;
 }
 
+.page.workbench {
+  height: 100dvh;
+  overflow: hidden;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-9);
+}
+
+.workbench-controls {
+  flex: 0 0 auto;
+  min-height: 0;
+  max-height: 40%;
+  overflow-y: auto;
+}
+
+.workbench-controls > .section {
+  margin-top: var(--space-4);
+  padding-top: 0;
+}
+
+.workbench-controls > .section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 .masthead {
   display: flex;
   flex-wrap: wrap;
@@ -221,6 +246,20 @@ body {
   gap: var(--space-4);
 }
 
+.copy-status {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.copy-status.copied {
+  color: var(--ok);
+}
+
+.copy-status.failed {
+  color: var(--bad);
+}
+
 .section {
   display: flex;
   flex-direction: column;
@@ -231,12 +270,13 @@ body {
 }
 
 .workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: var(--space-9);
-  align-items: start;
-  margin-top: var(--space-9);
-  padding-top: var(--space-9);
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
   border-top: 1px solid var(--line);
 }
 
@@ -245,6 +285,18 @@ body {
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
+}
+
+.pane.graph-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--space-1);
+}
+
+.pane.info-pane {
+  flex: 0 1 auto;
+  max-height: 50%;
+  overflow-y: auto;
 }
 
 .section.attached {
@@ -258,6 +310,19 @@ body {
   font-family: var(--font-mono);
   font-size: var(--t-body);
   overflow-wrap: anywhere;
+}
+
+.repo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.repo-head .repo-path {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .repo-summary {
@@ -280,7 +345,7 @@ body {
 .state-table {
   display: flex;
   flex-direction: column;
-  margin-top: var(--space-4);
+  margin-top: 0;
 }
 
 .state-row {
@@ -544,6 +609,10 @@ body {
   align-items: center;
   gap: var(--space-4);
   margin-top: var(--space-4);
+}
+
+.workbench-controls .actions {
+  margin-top: 0;
 }
 
 button {
@@ -828,6 +897,8 @@ button.quiet:hover:not(:disabled) {
 .graph-wrap {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: var(--space-1);
 }
 
@@ -840,11 +911,116 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
-  max-height: 440px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius);
+}
+
+.graph svg {
+  display: block;
+  flex: none;
+  margin-block: auto;
+}
+
+.graph-tip {
+  position: fixed;
+  z-index: 20;
+  transform: translate(-50%, 14px);
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  width: max-content;
+  max-width: 360px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text);
+  pointer-events: none;
+}
+
+.graph-tip .sha {
+  color: var(--text-muted);
+}
+
+.graph-tip .state {
+  color: var(--text-faint);
+}
+
+.graph-tip .state.added {
+  color: var(--ok);
+}
+
+.graph-list {
+  flex: 0 0 auto;
+}
+
+.graph-list[open] {
+  max-height: 45%;
+  overflow-y: auto;
+}
+
+.graph-list table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+}
+
+.graph-list th,
+.graph-list td {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  vertical-align: baseline;
+}
+
+.graph-list th {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.graph-list td.sha,
+.graph-list td.state {
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.graph-list td.state.added {
+  color: var(--ok);
+}
+
+.graph-list td.state.removed {
+  color: var(--text-faint);
+}
+
+.graph-list td.subject {
+  color: var(--text);
+}
+
+.graph-list .ref-change {
+  color: var(--warn);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .graph-edge,
+  .graph-node,
+  .graph-label {
+    transition:
+      opacity 320ms ease,
+      transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .graph-head {
+    transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
 }
 
 .empty {
@@ -891,12 +1067,6 @@ details > summary:hover {
 
 .caveat-item .name {
   color: var(--warn);
-}
-
-@media (max-width: 900px) {
-  .workspace {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 720px) {
