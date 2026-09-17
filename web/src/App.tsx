@@ -361,13 +361,22 @@ export default function App() {
               ) : null}
 
               <div className="actions">
-                <button
-                  className="primary"
-                  onClick={() => void runPreview()}
-                  disabled={busy}
-                >
-                  Rehearse
-                </button>
+                <span className="rehearse">
+                  <button
+                    className="primary"
+                    onClick={() => void runPreview()}
+                    disabled={busy || !repo}
+                    aria-describedby={repo ? undefined : "rehearse-reason"}
+                  >
+                    Rehearse
+                  </button>
+                  {!repo ? (
+                    <span className="rehearse-tip" id="rehearse-reason" role="tooltip">
+                      Connect a repository first. A rehearsal runs against one
+                      specific working copy.
+                    </span>
+                  ) : null}
+                </span>
               </div>
               {error && repo ? <p className="error">{error}</p> : null}
             </section>
