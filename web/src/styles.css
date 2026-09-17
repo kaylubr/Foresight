@@ -1298,6 +1298,8 @@ button.primary:disabled {
   margin: 0;
   font-size: var(--t-body);
   color: var(--text-muted);
+  text-align: justify;
+  line-height: 1.6;
 }
 
 .prose > .section:first-child {
