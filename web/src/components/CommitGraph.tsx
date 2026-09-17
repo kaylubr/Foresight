@@ -434,11 +434,13 @@ export default function CommitGraph({
               key={`node-${row.commit.sha}`}
               className="graph-node"
               onMouseEnter={(event) => showTip(event, row.commit.sha)}
+              onMouseLeave={() => setHovered(null)}
               style={{
                 transform: `translate(${x(row.index)}px, ${y(row.lane)}px) scale(${nodeScale(row.state)})`,
                 opacity: nodeOpacity(row.state)
               }}
             >
+              <circle r={RADIUS + 6} fill="transparent" />
               <circle
                 className="graph-fill"
                 r={RADIUS}

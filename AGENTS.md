@@ -29,7 +29,7 @@ The backend is organised by domain under `core/src`:
 
 Run these from the repository root: `npm run dev` (both packages), `npm test` (core suites), `npm run build` (frontend), `npm start` (core, serving the built frontend).
 
-Decisions are recorded in `docs/adr/`; the vocabulary is in `CONTEXT.md`.
+Decisions are recorded in `docs/adr/`; the vocabulary is in `docs/CONTEXT.md`.
 
 ## Common Workflows
 - Commits should be atomic, 1 commit per 1 task
