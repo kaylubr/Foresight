@@ -136,7 +136,7 @@ export default function OutcomePanel({
             <span className="verdict-kind">{KIND_LABELS[outcome.kind]}</span>
             {parts.map((part) => (
               <span key={part}>
-                <span className="sep">&middot;</span>
+                <span className="sep">+</span>
                 {part}
               </span>
             ))}

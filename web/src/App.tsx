@@ -178,7 +178,7 @@ export default function App() {
 
   const sandboxReady = health?.sandbox.ok ?? false;
 
-  const status: { tone: "ready" | "busy" | "blocked"; word: string; detail: string | null } =
+  const status: { tone: "ready" | "busy" | "blocked"; word: string | null; detail: string | null } =
     activity === "connect"
       ? { tone: "busy", word: "Connecting", detail: null }
       : activity === "refresh"
@@ -202,7 +202,7 @@ export default function App() {
                       [health.sandbox.reason, health.sandbox.nextStep].filter(Boolean).join(" ") ||
                       "The network-isolation sandbox could not be confirmed."
                   }
-                : { tone: "ready", word: "Ready", detail: null };
+                : { tone: "ready", word: null, detail: null };
 
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
@@ -260,7 +260,7 @@ export default function App() {
           tabIndex={status.detail ? 0 : undefined}
           aria-describedby={status.detail ? "status-detail" : undefined}
         >
-          {status.word}
+          {status.word ?? <span className="visually-hidden">Ready</span>}
           {status.detail ? (
             <span className="status-tip" id="status-detail" role="tooltip">
               {status.detail}
