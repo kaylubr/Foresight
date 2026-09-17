@@ -178,19 +178,25 @@ export default function App() {
 
   const sandboxReady = health?.sandbox.ok ?? false;
 
-  const status: { tone: "ready" | "busy" | "blocked"; word: string | null; detail: string | null } =
+  const status: {
+    tone: "ready" | "busy" | "blocked";
+    word: string;
+    display: "dot" | "spinner" | "word";
+    detail: string | null;
+  } =
     activity === "connect"
-      ? { tone: "busy", word: "Connecting", detail: null }
+      ? { tone: "busy", word: "Connecting", display: "spinner", detail: null }
       : activity === "refresh"
-        ? { tone: "busy", word: "Refreshing", detail: null }
+        ? { tone: "busy", word: "Refreshing", display: "spinner", detail: null }
         : activity === "rehearse"
-          ? { tone: "busy", word: "Rehearsing", detail: null }
+          ? { tone: "busy", word: "Rehearsing", display: "spinner", detail: null }
           : !healthChecked
-            ? { tone: "busy", word: "Checking", detail: null }
+            ? { tone: "busy", word: "Checking", display: "spinner", detail: null }
             : health === null
               ? {
                   tone: "blocked",
                   word: "Blocked",
+                  display: "word",
                   detail:
                     "Foresight could not reach its own API, so it cannot confirm whether rehearsals can run."
                 }
@@ -198,11 +204,12 @@ export default function App() {
                 ? {
                     tone: "blocked",
                     word: "Blocked",
+                    display: "word",
                     detail:
                       [health.sandbox.reason, health.sandbox.nextStep].filter(Boolean).join(" ") ||
                       "The network-isolation sandbox could not be confirmed."
                   }
-                : { tone: "ready", word: null, detail: null };
+                : { tone: "ready", word: "Ready", display: "dot", detail: null };
 
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
@@ -255,12 +262,16 @@ export default function App() {
           </nav>
         </div>
         <p
-          className={`status ${status.tone}`}
+          className={`status ${status.tone} ${status.display}`}
           role="status"
           tabIndex={status.detail ? 0 : undefined}
           aria-describedby={status.detail ? "status-detail" : undefined}
         >
-          {status.word ?? <span className="visually-hidden">Ready</span>}
+          {status.display === "word" ? (
+            status.word
+          ) : (
+            <span className="visually-hidden">{status.word}</span>
+          )}
           {status.detail ? (
             <span className="status-tip" id="status-detail" role="tooltip">
               {status.detail}
