@@ -41,6 +41,7 @@
 
   --t-label: 12px;
   --t-body: 16px;
+  --t-section: 20px;
   --t-outcome: 24px;
   --t-command: 32px;
 
@@ -121,43 +122,6 @@ body {
   font-size: var(--t-outcome);
   font-weight: 600;
   letter-spacing: -0.01em;
-}
-
-.page-head {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.breadcrumb ol {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
-  color: var(--text-muted);
-}
-
-.breadcrumb li + li::before {
-  content: "/";
-  margin-inline: var(--space-1);
-  color: var(--text-faint);
-}
-
-.breadcrumb a {
-  color: var(--text-muted);
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  color: var(--text);
-}
-
-.breadcrumb [aria-current="page"] {
-  color: var(--text);
 }
 
 .page {
@@ -1251,19 +1215,59 @@ button.primary:disabled {
   color: var(--text-muted);
 }
 
+.prose {
+  display: flex;
+  flex-direction: column;
+  max-width: 74ch;
+}
+
 .prose p {
   margin: 0;
-  max-width: 74ch;
   font-size: var(--t-body);
   color: var(--text-muted);
 }
 
+.prose > .section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.prose .lead {
+  color: var(--text);
+}
+
+.prose h2 {
+  font-size: var(--t-section);
+}
+
 .prose .guarantee {
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
-  line-height: 1.6;
-  color: var(--text-faint);
-  max-width: 96ch;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--line-strong);
+  color: var(--text);
+}
+
+.prose .caveats {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.prose .caveat-row {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.prose .caveats dt {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.prose .caveats dd {
+  margin: 0;
+  font-size: var(--t-body);
+  color: var(--text-muted);
 }
 
 details > summary {
