@@ -344,9 +344,27 @@ body {
 
 .pane-head {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  padding: 0;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.icon-button:disabled {
+  border-color: transparent;
+}
+
+.icon-button:hover:not(:disabled) {
+  color: var(--text);
 }
 
 .section.attached {
@@ -584,7 +602,7 @@ body {
 
 .info-tip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  top: calc(100% + 8px);
   right: 0;
   z-index: 10;
   width: max-content;
@@ -945,7 +963,6 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph-wrap {
-  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -1040,20 +1057,12 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph-list {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  background: var(--surface);
-  border-top: 1px solid var(--line-strong);
+  flex: 0 0 auto;
 }
 
 .graph-list[open] {
-  max-height: 60%;
+  max-height: 45%;
   overflow-y: auto;
-}
-
-.graph-list > summary {
-  padding-inline: var(--space-4);
 }
 
 .graph-list table {

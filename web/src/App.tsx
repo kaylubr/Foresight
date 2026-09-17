@@ -214,23 +214,35 @@ export default function App() {
             >
               <span className="repo-line">
                 <span className="repo-line-path">{repo.path}</span>
+                <span>--→</span>
                 <span className="repo-line-branch">{headLabel(repo)}</span>
                 {caveatCount(repo) > 0 ? (
-                  <span className="repo-line-marker">caveats ({caveatCount(repo)})</span>
+                  <span className="repo-line-marker">
+                    caveats ({caveatCount(repo)})
+                  </span>
                 ) : null}
               </span>
             </PageLink>
           ) : null}
           <nav className="nav" aria-label="Pages">
-            <PageLink to={ROUTE_PATHS.workbench} current={route === "workbench"}>
+            <PageLink
+              to={ROUTE_PATHS.workbench}
+              current={route === "workbench"}
+            >
               Rehearsal
             </PageLink>
             {repo ? (
-              <PageLink to={ROUTE_PATHS.repository} current={route === "repository"}>
+              <PageLink
+                to={ROUTE_PATHS.repository}
+                current={route === "repository"}
+              >
                 Repository
               </PageLink>
             ) : null}
-            <PageLink to={ROUTE_PATHS.guarantees} current={route === "guarantees"}>
+            <PageLink
+              to={ROUTE_PATHS.guarantees}
+              current={route === "guarantees"}
+            >
               Guarantees
             </PageLink>
           </nav>
@@ -253,189 +265,228 @@ export default function App() {
         <GuaranteesPage />
       ) : (
         <>
-      <div className="workbench-controls">
-      {!repo ? (
-      <section className="section">
-        <div className="connect-row">
-              <div className="field repo-path-field">
+          <div className="workbench-controls">
+            {!repo ? (
+              <section className="section">
+                <div className="connect-row">
+                  <div className="field repo-path-field">
+                    <div className="control">
+                      <input
+                        id="repo-path"
+                        value={repoPath}
+                        placeholder="/home/you/code/project"
+                        autoComplete="off"
+                        spellCheck={false}
+                        onChange={(event) => setRepoPath(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            void connect();
+                          }
+                        }}
+                      />
+                      <label htmlFor="repo-path">Repository path</label>
+                      <button
+                        type="button"
+                        className="info"
+                        aria-label="Point Foresight at a local Git working copy. It reads the repository to show its state and never writes to it."
+                      >
+                        <span aria-hidden="true">i</span>
+                        <span className="info-tip" role="tooltip">
+                          Point Foresight at a local Git working copy. It reads
+                          the repository to show its state and never writes to
+                          it.
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => void connect()}
+                    disabled={busy || repoPath.trim().length === 0}
+                  >
+                    Connect
+                  </button>
+                </div>
+                {error ? <p className="error">{error}</p> : null}
+              </section>
+            ) : null}
+
+            <section className="section">
+              <div className="editor">
+                <span className="prompt" aria-hidden="true">
+                  $
+                </span>
                 <div className="control">
                   <input
-                    id="repo-path"
-                    value={repoPath}
-                    placeholder="/home/you/code/project"
+                    id="command"
+                    value={command}
+                    placeholder="git reset --soft HEAD~1"
                     autoComplete="off"
                     spellCheck={false}
-                    onChange={(event) => setRepoPath(event.target.value)}
+                    onChange={(event) => setCommand(event.target.value)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
-                        void connect();
+                        void runPreview();
                       }
                     }}
                   />
-                  <label htmlFor="repo-path">Repository path</label>
+                  <label htmlFor="command">Command</label>
                   <button
                     type="button"
                     className="info"
-                    aria-label="Point Foresight at a local Git working copy. It reads the repository to show its state and never writes to it."
+                    aria-label="Runs in a throwaway clone. Your repository is not modified by the rehearsal."
                   >
                     <span aria-hidden="true">i</span>
                     <span className="info-tip" role="tooltip">
-                      Point Foresight at a local Git working copy. It reads the repository to show its state
-                      and never writes to it.
+                      Runs in a throwaway clone. Your repository is not modified
+                      by the rehearsal.
                     </span>
                   </button>
                 </div>
               </div>
-              <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
-                Connect
-              </button>
-        </div>
-        {error ? <p className="error">{error}</p> : null}
-      </section>
-      ) : null}
 
-      <section className="section">
-        <div className="editor">
-          <span className="prompt" aria-hidden="true">
-            $
-          </span>
-          <div className="control">
-            <input
-              id="command"
-              value={command}
-              placeholder="git reset --soft HEAD~1"
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(event) => setCommand(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  void runPreview();
-                }
-              }}
-            />
-            <label htmlFor="command">Command</label>
-            <button
-              type="button"
-              className="info"
-              aria-label="Runs in a throwaway clone. Your repository is not modified by the rehearsal."
-            >
-              <span aria-hidden="true">i</span>
-              <span className="info-tip" role="tooltip">
-                Runs in a throwaway clone. Your repository is not modified by the rehearsal.
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {needsSequence ? (
-          <div className="field">
-            <div className="control">
-              <textarea
-                id="sequence"
-                rows={4}
-                value={sequence}
-                aria-describedby="sequence-hint"
-                placeholder={"pick abc123 subject\nsquash def456 subject"}
-                onChange={(event) => setSequence(event.target.value)}
-              />
-              <label htmlFor="sequence">Interactive rebase todo</label>
-            </div>
-            <p className="muted" id="sequence-hint">
-              Leave empty to keep git&apos;s own todo list, which picks every commit.
-            </p>
-          </div>
-        ) : null}
-
-        <div className="actions">
-          <button className="primary" onClick={() => void runPreview()} disabled={busy}>
-            Rehearse
-          </button>
-        </div>
-        {error && repo ? <p className="error">{error}</p> : null}
-      </section>
-      </div>
-
-      <div className="workspace">
-        <section className="pane graph-pane" aria-label="Commit graph">
-          <div className="pane-head">
-            <h2 className="label">Commit graph</h2>
-            {repo ? (
-              <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
-                Refresh state
-              </button>
-            ) : null}
-          </div>
-          {repo && repo.graph.commits.length > 0 ? (
-            <CommitGraph
-              before={outcome?.graphBefore ?? repo.graph}
-              after={outcome?.graphAfter ?? null}
-              changedRefs={changedRefs}
-            />
-          ) : (
-            <p className="empty">Connect a repository to see its commit graph.</p>
-          )}
-        </section>
-
-        <section className="pane info-pane" aria-label="Command info">
-          <h2 className="label">Command info</h2>
-          {outcome ? (
-            <OutcomePanel
-              outcome={outcome}
-              footer={
-                <>
-                  {staleness?.stale ? (
-                    <div className="detail">
-                      <h4 className="label">Stale</h4>
-                      <p className="muted">
-                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse again
-                        for an accurate result.
-                      </p>
-                    </div>
-                  ) : null}
-                  {changedRefs.length > 0 ? (
-                    <p className="cs-note">
-                      Refs the rehearsal would move are marked on the graph. Commits the command would
-                      create are drawn from the rehearsal clone.
-                    </p>
-                  ) : null}
-                  <div className="actions">
-                    <button onClick={() => void copyCommand()}>Copy command</button>
-                    <span className={`copy-status ${copyStatus}`} role="status">
-                      {copyStatus === "copied"
-                        ? "Copied to clipboard"
-                        : copyStatus === "failed"
-                          ? "Could not copy"
-                          : ""}
-                    </span>
+              {needsSequence ? (
+                <div className="field">
+                  <div className="control">
+                    <textarea
+                      id="sequence"
+                      rows={4}
+                      value={sequence}
+                      aria-describedby="sequence-hint"
+                      placeholder={"pick abc123 subject\nsquash def456 subject"}
+                      onChange={(event) => setSequence(event.target.value)}
+                    />
+                    <label htmlFor="sequence">Interactive rebase todo</label>
                   </div>
-                </>
-              }
-            />
-          ) : (
-            <p className="empty">
-              Enter a Git command above and rehearse it to see exactly what it would change. Foresight
-              clones the repository, mirrors your staged and unstaged state, runs the command in the
-              clone, and reports the difference.
-            </p>
-          )}
-        </section>
-      </div>
+                  <p className="muted" id="sequence-hint">
+                    Leave empty to keep git&apos;s own todo list, which picks
+                    every commit.
+                  </p>
+                </div>
+              ) : null}
 
-      {history.length > 0 ? (
-        <section className="section">
-          <details>
-            <summary>Session history ({history.length})</summary>
-            {history
-              .slice()
-              .reverse()
-              .map((entry) => (
-                <p className="caveat-item mono" key={entry.id}>
-                  {entry.display} <span className="faint">{entry.kind}</span>
+              <div className="actions">
+                <button
+                  className="primary"
+                  onClick={() => void runPreview()}
+                  disabled={busy}
+                >
+                  Rehearse
+                </button>
+              </div>
+              {error && repo ? <p className="error">{error}</p> : null}
+            </section>
+          </div>
+
+          <div className="workspace">
+            <section className="pane graph-pane" aria-label="Commit graph">
+              <div className="pane-head">
+                <h2 className="label">Commit graph</h2>
+                {repo ? (
+                  <button
+                    className="icon-button"
+                    onClick={() => void refreshState()}
+                    disabled={busy}
+                    aria-label="Refresh state"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m15 14 5-5-5-5" />
+                      <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13" />
+                    </svg>
+                  </button>
+                ) : null}
+              </div>
+              {repo && repo.graph.commits.length > 0 ? (
+                <CommitGraph
+                  before={outcome?.graphBefore ?? repo.graph}
+                  after={outcome?.graphAfter ?? null}
+                  changedRefs={changedRefs}
+                />
+              ) : (
+                <p className="empty">
+                  Connect a repository to see its commit graph.
                 </p>
-              ))}
-          </details>
-        </section>
-      ) : null}
+              )}
+            </section>
+
+            <section className="pane info-pane" aria-label="Command info">
+              <h2 className="label">Command info</h2>
+              {outcome ? (
+                <OutcomePanel
+                  outcome={outcome}
+                  footer={
+                    <>
+                      {staleness?.stale ? (
+                        <div className="detail">
+                          <h4 className="label">Stale</h4>
+                          <p className="muted">
+                            {staleness.changed.join(", ")} changed after the
+                            mirror was taken. Rehearse again for an accurate
+                            result.
+                          </p>
+                        </div>
+                      ) : null}
+                      {changedRefs.length > 0 ? (
+                        <p className="cs-note">
+                          Refs the rehearsal would move are marked on the graph.
+                          Commits the command would create are drawn from the
+                          rehearsal clone.
+                        </p>
+                      ) : null}
+                      <div className="actions">
+                        <button onClick={() => void copyCommand()}>
+                          Copy command
+                        </button>
+                        <span
+                          className={`copy-status ${copyStatus}`}
+                          role="status"
+                        >
+                          {copyStatus === "copied"
+                            ? "Copied to clipboard"
+                            : copyStatus === "failed"
+                              ? "Could not copy"
+                              : ""}
+                        </span>
+                      </div>
+                    </>
+                  }
+                />
+              ) : (
+                <p className="empty">
+                  Enter a Git command above and rehearse it to see exactly what
+                  it would change. Foresight clones the repository, mirrors your
+                  staged and unstaged state, runs the command in the clone, and
+                  reports the difference.
+                </p>
+              )}
+            </section>
+          </div>
+
+          {history.length > 0 ? (
+            <section className="section">
+              <details>
+                <summary>Session history ({history.length})</summary>
+                {history
+                  .slice()
+                  .reverse()
+                  .map((entry) => (
+                    <p className="caveat-item mono" key={entry.id}>
+                      {entry.display}{" "}
+                      <span className="faint">{entry.kind}</span>
+                    </p>
+                  ))}
+              </details>
+            </section>
+          ) : null}
         </>
       )}
     </div>

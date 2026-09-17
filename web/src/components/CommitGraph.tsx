@@ -9,6 +9,8 @@ const PADDING = 12;
 const LABEL_PAD = 150;
 const REF_GAP = 13;
 const LABEL_CHAR = 6.6;
+const LABEL_ABOVE = RADIUS + REF_GAP;
+const LABEL_BELOW = RADIUS + 21;
 
 const SPINE_FILL = "oklch(0.82 0 0)";
 const MARKER = "oklch(0.96 0 0)";
@@ -29,6 +31,7 @@ interface Row {
   commit: CommitNode;
   lane: number;
   index: number;
+  seq: number;
   state: NodeState;
   refs: string[];
 }
@@ -39,9 +42,9 @@ interface Hovered {
   top: number;
 }
 
-function layout(commits: CommitNode[]): Array<Omit<Row, "state" | "refs">> {
+function layout(commits: CommitNode[]): Array<Omit<Row, "state" | "refs" | "seq">> {
   const active: Array<string | null> = [];
-  const rows: Array<Omit<Row, "state" | "refs">> = [];
+  const rows: Array<Omit<Row, "state" | "refs" | "seq">> = [];
 
   commits.forEach((commit, index) => {
     let lane = active.indexOf(commit.sha);
@@ -184,15 +187,21 @@ export default function CommitGraph({
             ...row,
             lane: row.lane === 0 ? spineSwap : row.lane === spineSwap ? 0 : row.lane
           }));
-    return ordered.map((row) => ({
-      ...row,
-      refs: visibleRefs(row.commit.refs),
-      state: afterShas.has(row.commit.sha)
-        ? beforeShas.has(row.commit.sha)
-          ? "present"
-          : "added"
-        : "removed"
-    }));
+    const counters = new Map<number, number>();
+    return ordered.map((row) => {
+      const seq = counters.get(row.lane) ?? 0;
+      counters.set(row.lane, seq + 1);
+      return {
+        ...row,
+        seq,
+        refs: visibleRefs(row.commit.refs),
+        state: afterShas.has(row.commit.sha)
+          ? beforeShas.has(row.commit.sha)
+            ? "present"
+            : "added"
+          : "removed"
+      };
+    });
   }, [target, before, beforeShas, afterShas]);
 
   const [revealed, setRevealed] = useState(true);
@@ -395,6 +404,11 @@ export default function CommitGraph({
               (item) => (item.label.length + (item.change ? 12 : 0)) * LABEL_CHAR + 10
             );
             let cursor = x(row.index) - widths.reduce((sum, width) => sum + width, 0) / 2;
+            const below = row.seq % 2 === 1;
+            const nodeY = y(row.lane);
+            const labelY = below ? nodeY + LABEL_BELOW : nodeY - LABEL_ABOVE;
+            const nearY = below ? nodeY + RADIUS + 1 : nodeY - RADIUS - 1;
+            const farY = below ? labelY - 13 : labelY + 2;
             return (
               <g
                 key={`label-${row.commit.sha}`}
@@ -408,15 +422,15 @@ export default function CommitGraph({
                     <g key={`${row.commit.sha}-${item.decoration}-${position}`}>
                       <line
                         x1={center}
-                        y1={y(row.lane) - RADIUS - REF_GAP + 2}
+                        y1={farY}
                         x2={x(row.index)}
-                        y2={y(row.lane) - RADIUS - 1}
+                        y2={nearY}
                         stroke={laneColor(row.lane)}
                         strokeWidth={1}
                       />
                       <text
                         x={center}
-                        y={y(row.lane) - RADIUS - REF_GAP}
+                        y={labelY}
                         textAnchor="middle"
                         style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}
                       >
