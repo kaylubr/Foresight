@@ -1,6 +1,5 @@
 import type {
   HealthResult,
-  HistoryEntry,
   ModelledState,
   RehearsalOutcome,
   RepoConnectResult,
@@ -32,12 +31,7 @@ export const api = {
   preview: (path: string, command: string, sequence: string | null): Promise<RehearsalOutcome> =>
     post<RehearsalOutcome>("/api/preview", { path, command, sequence }),
   staleness: (path: string, snapshot: ModelledState): Promise<StalenessResult> =>
-    post<StalenessResult>("/api/staleness", { path, snapshot }),
-  history: async (): Promise<HistoryEntry[]> => {
-    const response = await fetch("/api/history");
-    const payload = (await response.json()) as { entries: HistoryEntry[] };
-    return payload.entries;
-  }
+    post<StalenessResult>("/api/staleness", { path, snapshot })
 };
 
 export const TOOL_ERROR_LABELS: Record<ToolErrorCause, string> = {

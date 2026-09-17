@@ -25,7 +25,6 @@ The backend is organised by domain under `server/src`:
 | `repository/` | reading the repository: modelled state, aliases and identity, disqualifying signals |
 | `rehearsal/` | the throwaway run: mirror, sandbox, outcome classification |
 | `change/` | the diff between before and after, plus the side-effect fingerprints |
-| `session/` | the in-memory session history |
 | `pipeline.ts` | the stages in order, from a pasted command to an outcome |
 
 Run these from the repository root: `npm run dev` (both packages), `npm test` (server suites), `npm run build` (frontend), `npm start` (server, serving the built frontend).

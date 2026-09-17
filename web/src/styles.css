@@ -739,6 +739,44 @@ button.quiet:hover:not(:disabled) {
   color: var(--text);
 }
 
+button.primary:disabled {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text-faint);
+}
+
+.rehearse {
+  position: relative;
+  display: inline-flex;
+}
+
+.rehearse-tip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%);
+  z-index: 10;
+  width: max-content;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.rehearse:hover .rehearse-tip,
+.rehearse:focus-within .rehearse-tip {
+  opacity: 1;
+}
+
 .error {
   margin: var(--space-4) 0 0;
   font-size: var(--t-body);

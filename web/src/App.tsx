@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   HealthResult,
-  HistoryEntry,
   RehearsalOutcome,
   RepoConnectResult,
   StalenessResult
@@ -29,7 +28,6 @@ export default function App() {
   const [outcome, setOutcome] = useState<RehearsalOutcome | null>(null);
   const [health, setHealth] = useState<HealthResult | null>(null);
   const [staleness, setStaleness] = useState<StalenessResult | null>(null);
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healthChecked, setHealthChecked] = useState(false);
@@ -100,7 +98,6 @@ export default function App() {
       setRepoPath(result.path);
       setOutcome(null);
       setStaleness(null);
-      setHistory(await api.history());
     } catch (caught) {
       setError(describe(caught));
     } finally {
@@ -143,7 +140,6 @@ export default function App() {
         needsSequence && sequence.trim().length > 0 ? sequence : null
       );
       setOutcome(result);
-      setHistory(await api.history());
       if (
         result.kind === "tool-error" &&
         (result.cause === "sandbox-unavailable" || result.cause === "network-reachable")
@@ -465,23 +461,6 @@ export default function App() {
               )}
             </section>
           </div>
-
-          {history.length > 0 ? (
-            <section className="section">
-              <details>
-                <summary>Session history ({history.length})</summary>
-                {history
-                  .slice()
-                  .reverse()
-                  .map((entry) => (
-                    <p className="caveat-item mono" key={entry.id}>
-                      {entry.display}{" "}
-                      <span className="faint">{entry.kind}</span>
-                    </p>
-                  ))}
-              </details>
-            </section>
-          ) : null}
         </>
       )}
     </div>

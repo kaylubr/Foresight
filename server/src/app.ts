@@ -10,7 +10,6 @@ import type {
 } from "../../shared/types";
 import { checkStaleness, connectRepo, currentDenialProbe, previewCommand } from "./pipeline";
 import type { DenialProbe } from "./rehearsal/sandbox";
-import { listHistory, recordOutcome } from "./session/history";
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
@@ -67,15 +66,10 @@ export function createApp(): express.Express {
         command: body.command,
         sequence: body.sequence ?? null
       });
-      recordOutcome(outcome);
       response.json(outcome);
     } catch (error) {
       response.status(400).json({ error: describe(error) });
     }
-  });
-
-  app.get("/api/history", (_request, response) => {
-    response.json({ entries: listHistory() });
   });
 
   app.post("/api/staleness", async (request, response) => {

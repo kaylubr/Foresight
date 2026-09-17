@@ -232,10 +232,3 @@ export interface HealthResult {
   ok: boolean;
   sandbox: SandboxHealth;
 }
-
-export interface HistoryEntry {
-  id: string;
-  at: number;
-  display: string;
-  kind: string;
-}
