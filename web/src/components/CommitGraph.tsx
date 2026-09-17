@@ -2,7 +2,8 @@ import { curveBumpY, line } from "d3";
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { CommitNode, GraphData, RefChange } from "../../../shared/types";
 
-const COLUMN_WIDTH = 44;
+const MIN_COLUMN_WIDTH = 44;
+const COLUMN_GAP = 16;
 const LANE_HEIGHT = 40;
 const RADIUS = 7;
 const PADDING = 12;
@@ -10,7 +11,8 @@ const LABEL_PAD = 150;
 const REF_GAP = 13;
 const LABEL_CHAR = 6.6;
 const LABEL_ABOVE = RADIUS + REF_GAP;
-const LABEL_BELOW = RADIUS + 21;
+const LABEL_PAD_X = 10;
+const LABEL_MAX_CHARS = 22;
 
 const SPINE_FILL = "oklch(0.82 0 0)";
 const MARKER = "oklch(0.96 0 0)";
@@ -27,13 +29,75 @@ function laneColor(lane: number): string {
 
 type NodeState = "present" | "added" | "removed";
 
+interface LabelItem {
+  decoration: string;
+  head: boolean;
+  full: string;
+  moved: boolean;
+}
+
+interface LabelSegment {
+  decoration: string;
+  text: string;
+  head: boolean;
+  moved: boolean;
+  marker: boolean;
+}
+
 interface Row {
   commit: CommitNode;
   lane: number;
   index: number;
-  seq: number;
   state: NodeState;
   refs: string[];
+  fullLabels: string[];
+  labels: LabelSegment[];
+}
+
+function labelWidth(segment: LabelSegment): number {
+  return segment.text.length * LABEL_CHAR + LABEL_PAD_X;
+}
+
+function fitLabels(items: LabelItem[]): LabelSegment[] {
+  const segments: LabelSegment[] = [];
+  let used = 0;
+  let position = 0;
+
+  for (; position < items.length; position++) {
+    const item = items[position];
+    const remaining = items.length - position - 1;
+    const room = LABEL_MAX_CHARS - used - (remaining > 0 ? 4 : 0);
+    if (room < 1) {
+      break;
+    }
+    const truncated = item.full.length > room;
+    const text = truncated ? `${item.full.slice(0, Math.max(1, room - 1))}\u2026` : item.full;
+    segments.push({
+      decoration: item.decoration,
+      text,
+      head: item.head,
+      moved: item.moved,
+      marker: false
+    });
+    used += text.length + 1;
+    if (truncated) {
+      position += 1;
+      break;
+    }
+  }
+
+  const hidden = items.length - position;
+  if (hidden > 0) {
+    segments.push({
+      decoration: `more-${hidden}`,
+      text: `+${hidden}`,
+      head: false,
+      moved: false,
+      marker: true
+    });
+  }
+
+  return segments;
 }
 
 interface Hovered {
@@ -42,9 +106,11 @@ interface Hovered {
   top: number;
 }
 
-function layout(commits: CommitNode[]): Array<Omit<Row, "state" | "refs" | "seq">> {
+function layout(
+  commits: CommitNode[]
+): Array<Omit<Row, "state" | "refs" | "fullLabels" | "labels">> {
   const active: Array<string | null> = [];
-  const rows: Array<Omit<Row, "state" | "refs" | "seq">> = [];
+  const rows: Array<Omit<Row, "state" | "refs" | "fullLabels" | "labels">> = [];
 
   commits.forEach((commit, index) => {
     let lane = active.indexOf(commit.sha);
@@ -187,14 +253,28 @@ export default function CommitGraph({
             ...row,
             lane: row.lane === 0 ? spineSwap : row.lane === spineSwap ? 0 : row.lane
           }));
-    const counters = new Map<number, number>();
     return ordered.map((row) => {
-      const seq = counters.get(row.lane) ?? 0;
-      counters.set(row.lane, seq + 1);
+      const refs = visibleRefs(row.commit.refs);
+      const isHead = headSha === row.commit.sha;
+      const items: LabelItem[] = (isHead && refs.length === 0 ? [""] : refs).map((decoration) => {
+        const head = decoration.length === 0 || decoration.startsWith("HEAD -> ");
+        return {
+          decoration,
+          head,
+          full:
+            decoration.length === 0
+              ? "HEAD"
+              : head
+                ? `HEAD ${stripHead(decoration)}`
+                : decoration,
+          moved: decoration.length !== 0 && moved.has(fullRefName(decoration))
+        };
+      });
       return {
         ...row,
-        seq,
-        refs: visibleRefs(row.commit.refs),
+        refs,
+        fullLabels: items.map((item) => item.full),
+        labels: fitLabels(items),
         state: afterShas.has(row.commit.sha)
           ? beforeShas.has(row.commit.sha)
             ? "present"
@@ -202,7 +282,7 @@ export default function CommitGraph({
           : "removed"
       };
     });
-  }, [target, before, beforeShas, afterShas]);
+  }, [target, before, beforeShas, afterShas, moved]);
 
   const [revealed, setRevealed] = useState(true);
   const [hovered, setHovered] = useState<Hovered | null>(null);
@@ -248,11 +328,19 @@ export default function CommitGraph({
     return names;
   }, [rows]);
 
-  const width = PADDING * 2 + LABEL_PAD * 2 + rows.length * COLUMN_WIDTH;
+  const columnWidth = useMemo(() => {
+    const widest = rows.reduce(
+      (max, row) => Math.max(max, row.labels.reduce((sum, segment) => sum + labelWidth(segment), 0)),
+      0
+    );
+    return Math.max(MIN_COLUMN_WIDTH, Math.round(widest + COLUMN_GAP));
+  }, [rows]);
+
+  const width = PADDING * 2 + LABEL_PAD * 2 + rows.length * columnWidth;
   const height = PADDING * 2 + laneCount * LANE_HEIGHT;
 
   const x = (index: number): number =>
-    PADDING + LABEL_PAD + (rows.length - 1 - index) * COLUMN_WIDTH + COLUMN_WIDTH / 2;
+    PADDING + LABEL_PAD + (rows.length - 1 - index) * columnWidth + columnWidth / 2;
   const y = (lane: number): number => PADDING + lane * LANE_HEIGHT + LANE_HEIGHT / 2;
 
   const link = line<[number, number]>()
@@ -375,45 +463,33 @@ export default function CommitGraph({
           ) : null}
 
           {rows.map((row) => {
-            const isHead = headCommit === row.commit.sha;
-            const refs = isHead && row.refs.length === 0 ? [""] : row.refs;
-            if (refs.length === 0) {
+            if (row.labels.length === 0) {
               return null;
             }
-            const items = refs.map((decoration) => {
-              const head = decoration.length === 0 || decoration.startsWith("HEAD -> ");
-              const label = decoration.length === 0
-                ? "HEAD"
-                : head
-                  ? `HEAD ${stripHead(decoration)}`
-                  : decoration;
-              return {
-                decoration,
-                head,
-                label,
-                change: decoration.length === 0 ? undefined : moved.get(fullRefName(decoration))
-              };
-            });
-            const widths = items.map(
-              (item) => (item.label.length + (item.change ? 12 : 0)) * LABEL_CHAR + 10
-            );
+            const widths = row.labels.map(labelWidth);
             let cursor = x(row.index) - widths.reduce((sum, width) => sum + width, 0) / 2;
-            const below = row.seq % 2 === 1;
             const nodeY = y(row.lane);
-            const labelY = below ? nodeY + LABEL_BELOW : nodeY - LABEL_ABOVE;
-            const nearY = below ? nodeY + RADIUS + 1 : nodeY - RADIUS - 1;
-            const farY = below ? labelY - 13 : labelY + 2;
+            const labelY = nodeY - LABEL_ABOVE;
+            const nearY = nodeY - RADIUS - 1;
+            const farY = labelY + 2;
             return (
               <g
                 key={`label-${row.commit.sha}`}
                 className="graph-label"
                 style={{ opacity: nodeOpacity(row.state) }}
               >
-                {items.map((item, position) => {
+                {row.labels.map((segment, position) => {
                   const center = cursor + widths[position] / 2;
                   cursor += widths[position];
+                  const fill = segment.marker
+                    ? "var(--text-faint)"
+                    : segment.moved
+                      ? "var(--warn)"
+                      : segment.head
+                        ? MARKER
+                        : "oklch(0.82 0 0)";
                   return (
-                    <g key={`${row.commit.sha}-${item.decoration}-${position}`}>
+                    <g key={`${row.commit.sha}-${segment.decoration}-${position}`}>
                       <line
                         x1={center}
                         y1={farY}
@@ -428,16 +504,7 @@ export default function CommitGraph({
                         textAnchor="middle"
                         style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}
                       >
-                        <tspan style={{ fill: item.head ? MARKER : "oklch(0.82 0 0)" }}>
-                          {item.label}
-                        </tspan>
-                        {item.change ? (
-                          <tspan style={{ fill: "var(--warn)" }}>
-                            {item.change.after
-                              ? ` \u2192 ${item.change.after.slice(0, 7)}`
-                              : " \u2192 deleted"}
-                          </tspan>
-                        ) : null}
+                        <tspan style={{ fill }}>{segment.text}</tspan>
                       </text>
                     </g>
                   );
@@ -453,6 +520,9 @@ export default function CommitGraph({
               {trackNames.get(tipRow.lane) ?? `track ${tipRow.lane + 1}`}
             </span>
             <span>{tipRow.commit.subject}</span>
+            {tipRow.fullLabels.length > 0 ? (
+              <span className="refs">{tipRow.fullLabels.join("  ")}</span>
+            ) : null}
             {tipRow.state === "present" ? null : (
               <span className={`state ${tipRow.state}`}>{tipRow.state}</span>
             )}

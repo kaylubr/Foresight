@@ -1144,6 +1144,7 @@ button.primary:disabled {
   z-index: 20;
   transform: translate(-50%, 14px);
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: var(--space-1);
   width: max-content;
@@ -1164,6 +1165,10 @@ button.primary:disabled {
 
 .graph-tip .track {
   color: var(--text-faint);
+}
+
+.graph-tip .refs {
+  color: var(--text-muted);
 }
 
 .graph-tip .state {
