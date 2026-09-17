@@ -377,7 +377,7 @@ export default function App() {
             </section>
           </div>
 
-          <div className="workspace">
+          <div className={outcome ? "workspace has-outcome" : "workspace"}>
             <section className="pane graph-pane" aria-label="Commit graph">
               <div className="pane-head">
                 <h2 className="label">Commit graph</h2>
@@ -406,11 +406,19 @@ export default function App() {
                 ) : null}
               </div>
               {repo && repo.graph.commits.length > 0 ? (
-                <CommitGraph
-                  before={outcome?.graphBefore ?? repo.graph}
-                  after={outcome?.graphAfter ?? null}
-                  changedRefs={changedRefs}
-                />
+                <>
+                  <CommitGraph
+                    before={outcome?.graphBefore ?? repo.graph}
+                    after={outcome?.graphAfter ?? null}
+                    changedRefs={changedRefs}
+                  />
+                  {changedRefs.length > 0 ? (
+                    <p className="cs-note">
+                      Refs the rehearsal would move are marked on the graph. Commits the command
+                      would create are drawn from the rehearsal clone.
+                    </p>
+                  ) : null}
+                </>
               ) : (
                 <p className="empty">
                   Connect a repository to see its commit graph.
@@ -418,45 +426,32 @@ export default function App() {
               )}
             </section>
 
-            <section className="pane info-pane" aria-label="Command info">
-              <h2 className="label">Command info</h2>
+            <section className="pane info-pane" aria-label="Outcome">
+              <h2 className="label">Outcome</h2>
               {outcome ? (
                 <OutcomePanel
                   outcome={outcome}
-                  footer={
+                  stale={
+                    staleness?.stale ? (
+                      <p className="stale">
+                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse
+                        again for an accurate result.
+                      </p>
+                    ) : null
+                  }
+                  actions={
                     <>
-                      {staleness?.stale ? (
-                        <div className="detail">
-                          <h4 className="label">Stale</h4>
-                          <p className="muted">
-                            {staleness.changed.join(", ")} changed after the
-                            mirror was taken. Rehearse again for an accurate
-                            result.
-                          </p>
-                        </div>
-                      ) : null}
-                      {changedRefs.length > 0 ? (
-                        <p className="cs-note">
-                          Refs the rehearsal would move are marked on the graph.
-                          Commits the command would create are drawn from the
-                          rehearsal clone.
-                        </p>
-                      ) : null}
-                      <div className="actions">
-                        <button onClick={() => void copyCommand()}>
-                          Copy command
-                        </button>
-                        <span
-                          className={`copy-status ${copyStatus}`}
-                          role="status"
-                        >
-                          {copyStatus === "copied"
-                            ? "Copied to clipboard"
-                            : copyStatus === "failed"
-                              ? "Could not copy"
-                              : ""}
-                        </span>
-                      </div>
+                      <button onClick={() => void copyCommand()}>Copy command</button>
+                      <span
+                        className={`copy-status ${copyStatus}`}
+                        role="status"
+                      >
+                        {copyStatus === "copied"
+                          ? "Copied to clipboard"
+                          : copyStatus === "failed"
+                            ? "Could not copy"
+                            : ""}
+                      </span>
                     </>
                   }
                 />

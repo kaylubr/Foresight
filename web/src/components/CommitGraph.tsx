@@ -1,5 +1,5 @@
 import { curveBumpY, line } from "d3";
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { CommitNode, GraphData, RefChange } from "../../../shared/types";
 
 const COLUMN_WIDTH = 44;
@@ -205,7 +205,6 @@ export default function CommitGraph({
   }, [target, before, beforeShas, afterShas]);
 
   const [revealed, setRevealed] = useState(true);
-  const [replayToken, setReplayToken] = useState(0);
   const [hovered, setHovered] = useState<Hovered | null>(null);
   const graphRef = useRef<HTMLDivElement | null>(null);
 
@@ -234,9 +233,7 @@ export default function CommitGraph({
       cancelled = true;
       cancelAnimationFrame(frame);
     };
-  }, [hasChanges, before, after, replayToken, reduced]);
-
-  const replay = useCallback(() => setReplayToken((token) => token + 1), []);
+  }, [hasChanges, before, after, reduced]);
 
   const laneCount = useMemo(() => Math.max(1, ...rows.map((row) => row.lane + 1)), [rows]);
   const rowIndex = useMemo(() => new Map(rows.map((row) => [row.commit.sha, row])), [rows]);
@@ -310,9 +307,6 @@ export default function CommitGraph({
             removed
           </span>
         </span>
-        <button className="quiet" onClick={replay} disabled={!hasChanges}>
-          Replay
-        </button>
       </div>
       <div className="graph" ref={graphRef} onMouseLeave={() => setHovered(null)}>
         <svg

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ChangeSet } from "../../../shared/types";
 
 const STATUS_WORDS: Record<string, string> = {
@@ -45,6 +46,15 @@ function Entry({
   );
 }
 
+function Group({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="changes-group">
+      <h4 className="label">{title}</h4>
+      {children}
+    </section>
+  );
+}
+
 export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet }) {
   const { head } = changeSet;
 
@@ -64,83 +74,83 @@ export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet }) {
   const headBefore = short(head.commitBefore);
   const headAfter = short(head.commitAfter);
 
+  const entryCount =
+    changeSet.refs.length + (headMoved ? 1 : 0) + stagedCount + worktreeCount + commitsMoved;
+
   return (
-    <div className="changeset">
-      {changeSet.refs.length > 0 || commitsMoved > 0 ? (
-        <details className="cs-group">
-          <summary>
-            {changeSet.refs.length > 0 ? `Refs — ${changeSet.refs.length} moved` : "Refs"}
-          </summary>
-          {changeSet.refs.map((ref) => (
-            <Entry
-              key={ref.name}
-              label={ref.name}
-              before={short(ref.before)}
-              after={ref.after ? short(ref.after) : "deleted"}
-              afterFaint={!ref.after}
-            />
-          ))}
-          {changeSet.commitsAdded.length > 0 ? (
-            <p className="cs-note">{changeSet.commitsAdded.length} commit(s) newly reachable</p>
-          ) : null}
-          {changeSet.commitsRemoved.length > 0 ? (
-            <p className="cs-note">{changeSet.commitsRemoved.length} commit(s) no longer reachable</p>
-          ) : null}
-        </details>
-      ) : null}
+    <details className="changes">
+      <summary>{`Changes (${entryCount})`}</summary>
+      <div className="changes-body">
+        {changeSet.refs.length > 0 || commitsMoved > 0 ? (
+          <Group title="Refs">
+            {changeSet.refs.map((ref) => (
+              <Entry
+                key={ref.name}
+                label={ref.name}
+                before={short(ref.before)}
+                after={ref.after ? short(ref.after) : "deleted"}
+                afterFaint={!ref.after}
+              />
+            ))}
+            {changeSet.commitsAdded.length > 0 ? (
+              <p className="cs-note">{changeSet.commitsAdded.length} commit(s) newly reachable</p>
+            ) : null}
+            {changeSet.commitsRemoved.length > 0 ? (
+              <p className="cs-note">{changeSet.commitsRemoved.length} commit(s) no longer reachable</p>
+            ) : null}
+          </Group>
+        ) : null}
 
-      {headMoved ? (
-        <details className="cs-group">
-          <summary>{`HEAD — ${headBefore} → ${headAfter}`}</summary>
-          <Entry
-            label={head.detachedBefore ? "detached HEAD" : (head.before ?? "unborn")}
-            before={headBefore}
-            after={headAfter}
-          />
-        </details>
-      ) : null}
-
-      {indexMoved ? (
-        <details className="cs-group">
-          <summary>{`Index — ${stagedCount} staged`}</summary>
-          <Entry
-            label="staged files"
-            before={String(changeSet.indexCounts.before)}
-            after={String(changeSet.indexCounts.after)}
-            afterFaint={changeSet.indexCounts.before === changeSet.indexCounts.after}
-          />
-          {changeSet.staged.map((change) => (
+        {headMoved ? (
+          <Group title="HEAD">
             <Entry
-              key={change.path}
-              label={change.path}
-              before={word(change.before)}
-              after={word(change.after)}
-              afterFaint={change.after === "."}
+              label={head.detachedBefore ? "detached HEAD" : (head.before ?? "unborn")}
+              before={headBefore}
+              after={headAfter}
             />
-          ))}
-        </details>
-      ) : null}
+          </Group>
+        ) : null}
 
-      {worktreeMoved ? (
-        <details className="cs-group">
-          <summary>{`Working directory — ${worktreeCount} modified`}</summary>
-          <Entry
-            label="modified files"
-            before={String(changeSet.worktreeCounts.before)}
-            after={String(changeSet.worktreeCounts.after)}
-            afterFaint={changeSet.worktreeCounts.before === changeSet.worktreeCounts.after}
-          />
-          {changeSet.worktree.map((change) => (
+        {indexMoved ? (
+          <Group title="Index">
             <Entry
-              key={change.path}
-              label={change.path}
-              before={word(change.before)}
-              after={word(change.after)}
-              afterFaint={change.after === "."}
+              label="staged files"
+              before={String(changeSet.indexCounts.before)}
+              after={String(changeSet.indexCounts.after)}
+              afterFaint={changeSet.indexCounts.before === changeSet.indexCounts.after}
             />
-          ))}
-        </details>
-      ) : null}
-    </div>
+            {changeSet.staged.map((change) => (
+              <Entry
+                key={change.path}
+                label={change.path}
+                before={word(change.before)}
+                after={word(change.after)}
+                afterFaint={change.after === "."}
+              />
+            ))}
+          </Group>
+        ) : null}
+
+        {worktreeMoved ? (
+          <Group title="Working directory">
+            <Entry
+              label="modified files"
+              before={String(changeSet.worktreeCounts.before)}
+              after={String(changeSet.worktreeCounts.after)}
+              afterFaint={changeSet.worktreeCounts.before === changeSet.worktreeCounts.after}
+            />
+            {changeSet.worktree.map((change) => (
+              <Entry
+                key={change.path}
+                label={change.path}
+                before={word(change.before)}
+                after={word(change.after)}
+                afterFaint={change.after === "."}
+              />
+            ))}
+          </Group>
+        ) : null}
+      </div>
+    </details>
   );
 }

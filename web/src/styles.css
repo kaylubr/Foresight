@@ -91,11 +91,16 @@ body {
 
 .label {
   margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.caption {
+  margin: 0;
   font-family: var(--font-mono);
   font-size: var(--t-label);
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--text-faint);
 }
 
@@ -342,6 +347,14 @@ body {
   overflow-y: auto;
 }
 
+.has-outcome .pane.graph-pane {
+  flex: 1 1 auto;
+}
+
+.has-outcome .pane.info-pane {
+  flex: 0 1 240px;
+}
+
 .pane-head {
   display: flex;
   align-items: center;
@@ -400,8 +413,7 @@ body {
   color: var(--text-muted);
 }
 
-.repo-summary .sep,
-.outcome-summary .sep {
+.repo-summary .sep {
   color: var(--text-faint);
   padding: 0 6px;
 }
@@ -546,8 +558,6 @@ body {
   top: 6px;
   transform: none;
   font-size: var(--t-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .field.repo-path-field .control input {
@@ -634,8 +644,6 @@ body {
   top: 0;
   transform: translateY(-100%);
   font-size: var(--t-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
 }
 
 .field .control input::placeholder,
@@ -743,60 +751,62 @@ button.quiet:hover:not(:disabled) {
   gap: var(--space-4);
 }
 
-.outcome-head {
+.verdict {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  margin-bottom: 8px;
 }
 
-.outcome-kind {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text);
+.verdict-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
-.outcome.conflict-stop .outcome-kind,
-.outcome.pause-stop .outcome-kind {
-  color: var(--warn);
-}
-
-.outcome.failure .outcome-kind,
-.outcome.refusal .outcome-kind {
-  color: var(--bad);
-}
-
-.outcome-command {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
-  color: var(--text-muted);
-  overflow-wrap: anywhere;
-}
-
-.outcome-headline {
+.verdict-line {
   margin: 0;
   font-size: var(--t-outcome);
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.01em;
-  text-wrap: balance;
 }
 
-.outcome.tool-error .outcome-headline {
-  border-inline-start: 2px solid var(--text);
-  padding-inline-start: var(--space-4);
+.verdict-line .sep {
+  padding: 0 8px;
+  font-weight: 400;
+  color: var(--text-faint);
 }
 
-.outcome-summary {
+.outcome.conflict-stop .verdict-kind,
+.outcome.pause-stop .verdict-kind {
+  color: var(--warn);
+}
+
+.outcome.failure .verdict-kind,
+.outcome.refusal .verdict-kind {
+  color: var(--bad);
+}
+
+.verdict-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.explainer p {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: var(--t-label);
+  max-width: 74ch;
+  font-size: var(--t-body);
   color: var(--text);
+}
+
+.stale {
+  margin: 0;
+  max-width: 74ch;
+  font-size: var(--t-body);
+  color: var(--warn);
 }
 
 .detail {
@@ -812,10 +822,22 @@ button.quiet:hover:not(:disabled) {
   color: var(--text);
 }
 
-.changeset {
+.changes-body,
+.aside-body {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  margin-top: var(--space-1);
+}
+
+.changes-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.aside-body {
+  max-width: 74ch;
 }
 
 .cs-entry {
@@ -907,7 +929,7 @@ button.quiet:hover:not(:disabled) {
   padding-inline-start: var(--space-4);
 }
 
-.anomaly .label {
+.anomaly .caption {
   color: var(--anomaly);
 }
 
@@ -949,10 +971,6 @@ button.quiet:hover:not(:disabled) {
   gap: var(--space-1);
   border-inline-start: 3px solid var(--warn);
   padding-inline-start: var(--space-4);
-}
-
-.fidelity .label {
-  color: var(--warn);
 }
 
 .fidelity p {
@@ -1152,8 +1170,6 @@ details > summary {
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: var(--t-label);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
   color: var(--text-muted);
   padding: var(--space-1) 0;
 }
