@@ -268,12 +268,22 @@ body {
 }
 
 .status {
+  position: relative;
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-1);
   font-family: var(--font-mono);
   font-size: var(--t-label);
   color: var(--text-muted);
+}
+
+.status::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .status.ready {
@@ -288,10 +298,31 @@ body {
   color: var(--warn);
 }
 
-.status-block {
-  display: inline-flex;
-  align-items: baseline;
-  gap: var(--space-4);
+.status-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  text-align: start;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.status:hover .status-tip,
+.status:focus-visible .status-tip {
+  opacity: 1;
 }
 
 .copy-status {
@@ -344,16 +375,9 @@ body {
 .pane.info-pane {
   flex: 1 1 auto;
   min-height: 0;
-}
-
-.pane-body {
-  flex: 1 1 auto;
-  min-height: 0;
   overflow-y: auto;
-  padding: var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
 }
 
 .has-outcome .pane.graph-pane {
@@ -372,6 +396,7 @@ body {
 }
 
 .icon-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -387,6 +412,34 @@ body {
 
 .icon-button:hover:not(:disabled) {
   color: var(--text);
+}
+
+.icon-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 280px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-label);
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.icon-button:hover:not(:disabled) .icon-tip,
+.icon-button:focus-visible .icon-tip {
+  opacity: 1;
 }
 
 .section.attached {
@@ -795,6 +848,11 @@ button.primary:disabled {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+.outcome > * + * {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
 }
 
 .verdict {

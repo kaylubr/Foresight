@@ -178,20 +178,31 @@ export default function App() {
 
   const sandboxReady = health?.sandbox.ok ?? false;
 
-  const status =
+  const status: { tone: "ready" | "busy" | "blocked"; word: string; detail: string | null } =
     activity === "connect"
-      ? { tone: "busy", text: "Connecting to the repository…" }
+      ? { tone: "busy", word: "Connecting", detail: null }
       : activity === "refresh"
-        ? { tone: "busy", text: "Re-reading the repository state…" }
+        ? { tone: "busy", word: "Refreshing", detail: null }
         : activity === "rehearse"
-          ? { tone: "busy", text: "Rehearsing. Building the clone and running the command." }
+          ? { tone: "busy", word: "Rehearsing", detail: null }
           : !healthChecked
-            ? { tone: "busy", text: "Checking sandbox readiness…" }
+            ? { tone: "busy", word: "Checking", detail: null }
             : health === null
-              ? { tone: "blocked", text: "Foresight cannot reach its own API." }
+              ? {
+                  tone: "blocked",
+                  word: "Blocked",
+                  detail:
+                    "Foresight could not reach its own API, so it cannot confirm whether rehearsals can run."
+                }
               : !sandboxReady
-                ? { tone: "blocked", text: `Rehearsals unavailable: ${health.sandbox.reason}` }
-                : { tone: "ready", text: "Ready" };
+                ? {
+                    tone: "blocked",
+                    word: "Blocked",
+                    detail:
+                      [health.sandbox.reason, health.sandbox.nextStep].filter(Boolean).join(" ") ||
+                      "The network-isolation sandbox could not be confirmed."
+                  }
+                : { tone: "ready", word: "Ready", detail: null };
 
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
@@ -243,11 +254,19 @@ export default function App() {
             </PageLink>
           </nav>
         </div>
-        <div className="status-block">
-          <p className={`status ${status.tone}`} role="status">
-            {status.text}
-          </p>
-        </div>
+        <p
+          className={`status ${status.tone}`}
+          role="status"
+          tabIndex={status.detail ? 0 : undefined}
+          aria-describedby={status.detail ? "status-detail" : undefined}
+        >
+          {status.word}
+          {status.detail ? (
+            <span className="status-tip" id="status-detail" role="tooltip">
+              {status.detail}
+            </span>
+          ) : null}
+        </p>
       </header>
 
       {route === "repository" ? (
@@ -392,6 +411,7 @@ export default function App() {
                     onClick={() => void refreshState()}
                     disabled={busy}
                     aria-label="Refresh state"
+                    aria-describedby="refresh-tip"
                   >
                     <svg
                       width="15"
@@ -407,6 +427,10 @@ export default function App() {
                       <path d="m15 14 5-5-5-5" />
                       <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13" />
                     </svg>
+                    <span className="icon-tip" id="refresh-tip" role="tooltip">
+                      Re-read the repository and redraw the graph. Use it after
+                      the working copy changes outside Foresight.
+                    </span>
                   </button>
                 ) : null}
               </div>
@@ -433,43 +457,41 @@ export default function App() {
 
             <section className="pane info-pane" aria-label="Outcome">
               <h2 className="label">Outcome</h2>
-              <div className="pane-body">
-                {outcome ? (
-                  <OutcomePanel
-                    outcome={outcome}
-                    stale={
-                      staleness?.stale ? (
-                        <p className="stale">
-                          {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse
-                          again for an accurate result.
-                        </p>
-                      ) : null
-                    }
-                    actions={
-                      <>
-                        <button onClick={() => void copyCommand()}>Copy command</button>
-                        <span
-                          className={`copy-status ${copyStatus}`}
-                          role="status"
-                        >
-                          {copyStatus === "copied"
-                            ? "Copied to clipboard"
-                            : copyStatus === "failed"
-                              ? "Could not copy"
-                              : ""}
-                        </span>
-                      </>
-                    }
-                  />
-                ) : (
-                  <p className="empty">
-                    Enter a Git command above and rehearse it to see exactly what
-                    it would change. Foresight clones the repository, mirrors your
-                    staged and unstaged state, runs the command in the clone, and
-                    reports the difference.
-                  </p>
-                )}
-              </div>
+              {outcome ? (
+                <OutcomePanel
+                  outcome={outcome}
+                  stale={
+                    staleness?.stale ? (
+                      <p className="stale">
+                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse
+                        again for an accurate result.
+                      </p>
+                    ) : null
+                  }
+                  actions={
+                    <>
+                      <button onClick={() => void copyCommand()}>Copy command</button>
+                      <span
+                        className={`copy-status ${copyStatus}`}
+                        role="status"
+                      >
+                        {copyStatus === "copied"
+                          ? "Copied to clipboard"
+                          : copyStatus === "failed"
+                            ? "Could not copy"
+                            : ""}
+                      </span>
+                    </>
+                  }
+                />
+              ) : (
+                <p className="empty">
+                  Enter a Git command above and rehearse it to see exactly what
+                  it would change. Foresight clones the repository, mirrors your
+                  staged and unstaged state, runs the command in the clone, and
+                  reports the difference.
+                </p>
+              )}
             </section>
           </div>
         </>
