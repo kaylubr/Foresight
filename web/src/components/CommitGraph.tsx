@@ -460,49 +460,53 @@ export default function CommitGraph({
         ) : null}
       </div>
 
-      <details className="graph-list">
-        <summary>Commits ({rows.length})</summary>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Commit</th>
-              <th scope="col">Track</th>
-              <th scope="col">Refs</th>
-              <th scope="col">Subject</th>
-              <th scope="col">State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.commit.sha}>
-                <td className="sha">{row.commit.sha.slice(0, 7)}</td>
-                <td className="track">{trackNames.get(row.lane) ?? `track ${row.lane + 1}`}</td>
-                <td>
-                  {row.refs.length === 0
-                    ? "none"
-                    : row.refs.map((decoration) => {
-                        const change = moved.get(fullRefName(decoration));
-                        return (
-                          <span key={decoration}>
-                            {decoration}
-                            {change ? (
-                              <span className="ref-change">
-                                {change.after
-                                  ? ` \u2192 ${change.after.slice(0, 7)}`
-                                  : " \u2192 deleted"}
-                              </span>
-                            ) : null}{" "}
-                          </span>
-                        );
-                      })}
-                </td>
-                <td className="subject">{row.commit.subject}</td>
-                <td className={`state ${row.state}`}>{row.state}</td>
+      <section className="commits" aria-labelledby="commits-head">
+        <h3 className="commits-head" id="commits-head">
+          {rows.length} commit{rows.length === 1 ? "" : "s"}
+        </h3>
+        <div className="commits-body">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Commit</th>
+                <th scope="col">Track</th>
+                <th scope="col">Refs</th>
+                <th scope="col">Subject</th>
+                <th scope="col">State</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.commit.sha}>
+                  <td className="sha">{row.commit.sha.slice(0, 7)}</td>
+                  <td className="track">{trackNames.get(row.lane) ?? `track ${row.lane + 1}`}</td>
+                  <td>
+                    {row.refs.length === 0
+                      ? "none"
+                      : row.refs.map((decoration) => {
+                          const change = moved.get(fullRefName(decoration));
+                          return (
+                            <span key={decoration}>
+                              {decoration}
+                              {change ? (
+                                <span className="ref-change">
+                                  {change.after
+                                    ? ` \u2192 ${change.after.slice(0, 7)}`
+                                    : " \u2192 deleted"}
+                                </span>
+                              ) : null}{" "}
+                            </span>
+                          );
+                        })}
+                  </td>
+                  <td className="subject">{row.commit.subject}</td>
+                  <td className={`state ${row.state}`}>{row.state}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

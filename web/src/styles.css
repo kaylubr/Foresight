@@ -339,7 +339,6 @@ body {
 
 .pane.graph-pane {
   flex: none;
-  gap: var(--space-1);
 }
 
 .pane.info-pane {
@@ -1138,55 +1137,87 @@ button.primary:disabled {
   color: var(--ok);
 }
 
-.graph-list {
+.commits {
+  display: flex;
+  flex-direction: column;
   flex: 0 0 auto;
+  max-height: 320px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
 }
 
-.graph-list[open] {
-  max-height: 45%;
+.commits-head {
+  flex: none;
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+
+.commits-body {
+  min-height: 0;
   overflow-y: auto;
 }
 
-.graph-list table {
+.commits-body table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-mono);
   font-size: var(--t-label);
 }
 
-.graph-list th,
-.graph-list td {
+.commits-body th,
+.commits-body td {
   padding: 4px 8px 4px 0;
   border-bottom: 1px solid var(--line);
   text-align: start;
   vertical-align: baseline;
 }
 
-.graph-list th {
+.commits-body th:first-child,
+.commits-body td:first-child {
+  padding-inline-start: var(--space-4);
+}
+
+.commits-body th:last-child,
+.commits-body td:last-child {
+  padding-inline-end: var(--space-4);
+}
+
+.commits-body th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
   color: var(--text-faint);
   font-weight: 400;
 }
 
-.graph-list td.sha,
-.graph-list td.track,
-.graph-list td.state {
+.commits-body td.sha,
+.commits-body td.track,
+.commits-body td.state {
   white-space: nowrap;
   color: var(--text-muted);
 }
 
-.graph-list td.state.added {
+.commits-body td.state.added {
   color: var(--ok);
 }
 
-.graph-list td.state.removed {
+.commits-body td.state.removed {
   color: var(--text-faint);
 }
 
-.graph-list td.subject {
+.commits-body td.subject {
   color: var(--text);
 }
 
-.graph-list .ref-change {
+.commits-body .ref-change {
   color: var(--warn);
 }
 
