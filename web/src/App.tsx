@@ -446,19 +446,11 @@ export default function App() {
                 ) : null}
               </div>
               {repo && repo.graph.commits.length > 0 ? (
-                <>
-                  <CommitGraph
-                    before={outcome?.graphBefore ?? repo.graph}
-                    after={outcome?.graphAfter ?? null}
-                    changedRefs={changedRefs}
-                  />
-                  {changedRefs.length > 0 ? (
-                    <p className="cs-note">
-                      Refs the rehearsal would move are marked on the graph. Commits the command
-                      would create are drawn from the rehearsal clone.
-                    </p>
-                  ) : null}
-                </>
+                <CommitGraph
+                  before={outcome?.graphBefore ?? repo.graph}
+                  after={outcome?.graphAfter ?? null}
+                  changedRefs={changedRefs}
+                />
               ) : (
                 <p className="empty">
                   Connect a repository to see its commit graph.
