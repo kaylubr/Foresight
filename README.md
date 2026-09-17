@@ -20,5 +20,3 @@
 npm install
 npm run dev
 ```
-
-The web app runs at http://localhost:5173.
