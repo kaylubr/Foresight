@@ -401,7 +401,7 @@ export default function App() {
             </section>
           </div>
 
-          <div className={outcome ? "workspace has-outcome" : "workspace"}>
+          <div className="workspace">
             <section className="pane graph-pane" aria-label="Commit graph">
               <div className="pane-head">
                 <h2 className="label">Commit graph</h2>
