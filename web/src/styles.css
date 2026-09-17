@@ -904,10 +904,30 @@ button.quiet:hover:not(:disabled) {
 
 .graph-bar {
   display: flex;
-  align-items: baseline;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   font-size: var(--t-label);
+}
+
+.graph-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+.graph-key .key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.graph-glyph {
+  display: block;
+  flex: none;
 }
 
 .graph {
@@ -950,6 +970,10 @@ button.quiet:hover:not(:disabled) {
   color: var(--text-muted);
 }
 
+.graph-tip .track {
+  color: var(--text-faint);
+}
+
 .graph-tip .state {
   color: var(--text-faint);
 }
@@ -988,6 +1012,7 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph-list td.sha,
+.graph-list td.track,
 .graph-list td.state {
   white-space: nowrap;
   color: var(--text-muted);
@@ -1016,6 +1041,10 @@ button.quiet:hover:not(:disabled) {
     transition:
       opacity 320ms ease,
       transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .graph-fill {
+    transition: fill-opacity 320ms ease;
   }
 
   .graph-head {

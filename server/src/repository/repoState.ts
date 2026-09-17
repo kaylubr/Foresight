@@ -206,6 +206,7 @@ export async function readGraph(repoPath: string, limit = 400): Promise<GraphDat
       [
         "log",
         "--branches",
+        "--remotes",
         "--tags",
         "HEAD",
         "--date-order",
@@ -231,6 +232,7 @@ export async function readGraph(repoPath: string, limit = 400): Promise<GraphDat
           .split(",")
           .map((ref) => ref.trim())
           .filter((ref) => ref.length > 0)
+          .filter((ref) => !/^[^/]+\/HEAD$/.test(ref))
       };
     });
   return { commits, head };
