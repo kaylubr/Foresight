@@ -279,30 +279,33 @@ export default function CommitGraph({
 
   return (
     <div className="graph-wrap">
-      {hasChanges ? (
-        <div className="graph-bar">
-          <span className="mono faint">
-            {revealed ? "After the rehearsal" : "Before the rehearsal"}
-          </span>
-          <span className="graph-key">
-            <span className="key-item">
-              <NodeGlyph state="present" />
-              present
+      <div className="graph-bar">
+        <div className="graph-bar-left">
+          <h2 className="label">Commit graph</h2>
+          {hasChanges ? (
+            <span className="mono faint">
+              {revealed ? "After the rehearsal" : "Before the rehearsal"}
             </span>
-            <span className="key-item">
-              <NodeGlyph state="added" />
-              added
-            </span>
-            <span className="key-item">
-              <NodeGlyph state="removed" />
-              removed
-            </span>
-          </span>
-          <button className="quiet" onClick={replay}>
-            Replay
-          </button>
+          ) : null}
         </div>
-      ) : null}
+        <span className="graph-key">
+          <span className="key-item">
+            <NodeGlyph state="present" />
+            present
+          </span>
+          <span className="key-item">
+            <NodeGlyph state="added" />
+            added
+          </span>
+          <span className="key-item">
+            <NodeGlyph state="removed" />
+            removed
+          </span>
+        </span>
+        <button className="quiet" onClick={replay} disabled={!hasChanges}>
+          Replay
+        </button>
+      </div>
       <div className="graph" ref={graphRef} onMouseLeave={() => setHovered(null)}>
         <svg
           width={width}

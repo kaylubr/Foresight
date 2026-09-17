@@ -11,8 +11,9 @@ import brandUrl from "./assets/brand.svg";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
-import RepoState from "./components/RepoState";
-import { PageLink, ROUTE_PATHS, useRoute } from "./route";
+import RepositoryPage from "./components/RepositoryPage";
+import { caveatCount, headLabel } from "./repoSummary";
+import { PageLink, ROUTE_PATHS, navigate, useRoute } from "./route";
 
 function describe(error: unknown): string {
   return error instanceof Error ? error.message : "unexpected failure";
@@ -120,6 +121,13 @@ export default function App() {
     }
   }, [repo]);
 
+  const disconnectRepo = useCallback(() => {
+    setRepo(null);
+    setOutcome(null);
+    setStaleness(null);
+    navigate(ROUTE_PATHS.workbench);
+  }, []);
+
   const runPreview = useCallback(async () => {
     if (!repo) {
       setError("Connect a repository before rehearsing a command against it.");
@@ -189,45 +197,39 @@ export default function App() {
                 ? { tone: "blocked", text: `Rehearsals unavailable: ${health.sandbox.reason}` }
                 : { tone: "ready", text: "Ready" };
 
-  const summary: string[] = [];
-  if (repo) {
-    const branches = repo.state.refs.filter((ref) => ref.name.startsWith("refs/heads/")).length;
-    const tags = repo.state.refs.filter((ref) => ref.name.startsWith("refs/tags/")).length;
-    summary.push(
-      repo.state.head.detached
-        ? `detached at ${repo.state.head.commit?.slice(0, 7) ?? "unborn"}`
-        : `${repo.state.head.symbolic?.replace("refs/heads/", "") ?? "unborn"} @ ${repo.state.head.commit?.slice(0, 7) ?? "none"}`
-    );
-    summary.push(`${branches} branch${branches === 1 ? "" : "es"}`);
-    summary.push(`${tags} tag${tags === 1 ? "" : "s"}`);
-    summary.push(`${repo.state.stagedEntries.length} staged`);
-    summary.push(`${repo.state.worktreeEntries.length} modified`);
-    summary.push(`${repo.untracked.length} untracked`);
-    if (repo.ignored.length > 0) {
-      summary.push(`${repo.ignored.length} ignored`);
-    }
-    if (
-      repo.state.stagedEntries.length === 0 &&
-      repo.state.worktreeEntries.length === 0 &&
-      repo.untracked.length === 0
-    ) {
-      summary.push("clean repository state");
-    }
-  }
-
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
   return (
-    <div className={route === "guarantees" ? "page" : "page workbench"}>
+    <div className={route === "workbench" ? "page workbench" : "page"}>
       <header className="masthead">
         <div className="masthead-left">
           <h1 className="brand">
             <img src={brandUrl} alt="Foresight" />
           </h1>
+          {repo ? (
+            <PageLink
+              to={ROUTE_PATHS.repository}
+              current={route === "repository"}
+              className="repo-line-link"
+            >
+              <span className="repo-line">
+                <span className="repo-line-path">{repo.path}</span>
+                <span className="repo-line-branch">{headLabel(repo)}</span>
+                {caveatCount(repo) > 0 ? (
+                  <span className="repo-line-marker">caveats ({caveatCount(repo)})</span>
+                ) : null}
+              </span>
+            </PageLink>
+          ) : null}
           <nav className="nav" aria-label="Pages">
             <PageLink to={ROUTE_PATHS.workbench} current={route === "workbench"}>
               Rehearsal
             </PageLink>
+            {repo ? (
+              <PageLink to={ROUTE_PATHS.repository} current={route === "repository"}>
+                Repository
+              </PageLink>
+            ) : null}
             <PageLink to={ROUTE_PATHS.guarantees} current={route === "guarantees"}>
               Guarantees
             </PageLink>
@@ -240,44 +242,21 @@ export default function App() {
         </div>
       </header>
 
-      {route === "guarantees" ? (
+      {route === "repository" ? (
+        <RepositoryPage
+          repo={repo}
+          busy={busy}
+          onReload={() => void refreshState()}
+          onDisconnect={disconnectRepo}
+        />
+      ) : route === "guarantees" ? (
         <GuaranteesPage />
       ) : (
         <>
       <div className="workbench-controls">
+      {!repo ? (
       <section className="section">
-        {repo ? (
-          <>
-            <div className="repo-head">
-              <p className="repo-path">{repo.path}</p>
-              <div className="actions">
-                <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
-                  Refresh state
-                </button>
-                <button className="quiet" onClick={() => setRepo(null)}>
-                  Change repository
-                </button>
-              </div>
-            </div>
-            <p className="repo-summary">
-              {summary.map((part, index) => (
-                <span key={part}>
-                  {index > 0 ? <span className="sep">&middot;</span> : null}
-                  {part}
-                </span>
-              ))}
-            </p>
-            {repo.staticDisqualifiers.submodules ||
-            repo.staticDisqualifiers.lfs ||
-            repo.staticDisqualifiers.linkedWorktrees > 0 ||
-            repo.dynamicDisqualifiers.operation ? (
-              <p className="repo-summary blocked">Previews are blocked for this repository.</p>
-            ) : null}
-            <RepoState repo={repo} />
-          </>
-        ) : (
-          <>
-            <div className="connect-row">
+        <div className="connect-row">
               <div className="field repo-path-field">
                 <div className="control">
                   <input
@@ -310,11 +289,10 @@ export default function App() {
               <button onClick={() => void connect()} disabled={busy || repoPath.trim().length === 0}>
                 Connect
               </button>
-            </div>
-          </>
-        )}
-        {error && !repo ? <p className="error">{error}</p> : null}
+        </div>
+        {error ? <p className="error">{error}</p> : null}
       </section>
+      ) : null}
 
       <section className="section">
         <div className="editor">
@@ -379,21 +357,20 @@ export default function App() {
 
       <div className="workspace">
         <section className="pane graph-pane" aria-label="Commit graph">
-          <h2 className="label">Commit graph</h2>
+          <div className="pane-head">
+            <h2 className="label">Commit graph</h2>
+            {repo ? (
+              <button className="quiet" onClick={() => void refreshState()} disabled={busy}>
+                Refresh state
+              </button>
+            ) : null}
+          </div>
           {repo && repo.graph.commits.length > 0 ? (
-            <>
-              <CommitGraph
-                before={outcome?.graphBefore ?? repo.graph}
-                after={outcome?.graphAfter ?? null}
-                changedRefs={changedRefs}
-              />
-              {changedRefs.length > 0 ? (
-                <p className="cs-note">
-                  Refs the rehearsal would move are marked on the graph. Commits the command would create
-                  are drawn from the rehearsal clone.
-                </p>
-              ) : null}
-            </>
+            <CommitGraph
+              before={outcome?.graphBefore ?? repo.graph}
+              after={outcome?.graphAfter ?? null}
+              changedRefs={changedRefs}
+            />
           ) : (
             <p className="empty">Connect a repository to see its commit graph.</p>
           )}
@@ -414,6 +391,12 @@ export default function App() {
                         for an accurate result.
                       </p>
                     </div>
+                  ) : null}
+                  {changedRefs.length > 0 ? (
+                    <p className="cs-note">
+                      Refs the rehearsal would move are marked on the graph. Commits the command would
+                      create are drawn from the rehearsal clone.
+                    </p>
                   ) : null}
                   <div className="actions">
                     <button onClick={() => void copyCommand()}>Copy command</button>

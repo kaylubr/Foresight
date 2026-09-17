@@ -219,6 +219,48 @@ body {
   color: var(--text);
 }
 
+.repo-line-link {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 46ch;
+  text-decoration: none;
+}
+
+.repo-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.repo-line-path {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+  text-align: start;
+  unicode-bidi: plaintext;
+}
+
+.repo-line-branch {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.repo-line-marker {
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.repo-line-link:hover .repo-line-path,
+.repo-line-link:hover .repo-line-branch {
+  color: var(--text);
+}
+
 .status {
   display: inline-flex;
   align-items: baseline;
@@ -288,15 +330,22 @@ body {
 }
 
 .pane.graph-pane {
-  flex: 1 1 auto;
+  flex: 0 0 70%;
   min-height: 0;
   gap: var(--space-1);
 }
 
 .pane.info-pane {
-  flex: 0 1 auto;
-  max-height: 50%;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+}
+
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .section.attached {
@@ -895,6 +944,7 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
@@ -909,6 +959,12 @@ button.quiet:hover:not(:disabled) {
   justify-content: space-between;
   gap: var(--space-4);
   font-size: var(--t-label);
+}
+
+.graph-bar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
 }
 
 .graph-key {
@@ -983,12 +1039,20 @@ button.quiet:hover:not(:disabled) {
 }
 
 .graph-list {
-  flex: 0 0 auto;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--line-strong);
 }
 
 .graph-list[open] {
-  max-height: 45%;
+  max-height: 60%;
   overflow-y: auto;
+}
+
+.graph-list > summary {
+  padding-inline: var(--space-4);
 }
 
 .graph-list table {

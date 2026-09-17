@@ -9,33 +9,42 @@ function Row({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-export default function RepoState({ repo }: { repo: RepoConnectResult }) {
-  const { state, staticDisqualifiers, dynamicDisqualifiers } = repo;
+function caveatLines(repo: RepoConnectResult): string[] {
+  const lines: string[] = [];
+  if (repo.staticDisqualifiers.submodules) {
+    lines.push("This repository has submodules, and their contents are not copied into the rehearsal.");
+  }
+  if (repo.staticDisqualifiers.lfs) {
+    lines.push("Git LFS filters are present, so LFS files rehearse as pointers rather than real content.");
+  }
+  if (repo.staticDisqualifiers.linkedWorktrees > 0) {
+    lines.push(
+      `${repo.staticDisqualifiers.linkedWorktrees} linked worktree(s) are present and are not copied into the rehearsal.`
+    );
+  }
+  if (repo.dynamicDisqualifiers.operation) {
+    lines.push(
+      `The repository is mid-${repo.dynamicDisqualifiers.operation}, and git's internal state for that is not reproduced.`
+    );
+  }
+  return lines;
+}
 
-  const blocked =
-    staticDisqualifiers.submodules ||
-    staticDisqualifiers.lfs ||
-    staticDisqualifiers.linkedWorktrees > 0 ||
-    dynamicDisqualifiers.operation !== null;
+export default function RepoState({ repo }: { repo: RepoConnectResult }) {
+  const { state } = repo;
+  const lines = caveatLines(repo);
 
   return (
     <>
-      {blocked ? (
+      {lines.length > 0 ? (
         <div className="detail">
-          <h3 className="label">Previews are blocked</h3>
-          {staticDisqualifiers.submodules ? <p className="caveat-item">Submodules are present.</p> : null}
-          {staticDisqualifiers.lfs ? <p className="caveat-item">Git LFS filters are present.</p> : null}
-          {staticDisqualifiers.linkedWorktrees > 0 ? (
-            <p className="caveat-item">
-              {staticDisqualifiers.linkedWorktrees} linked worktree(s) present.
+          <h3 className="label">Caveats</h3>
+          <p className="muted">A rehearsal still runs, but these can make it differ from a real run.</p>
+          {lines.map((line) => (
+            <p className="caveat-item" key={line}>
+              {line}
             </p>
-          ) : null}
-          {dynamicDisqualifiers.operation ? (
-            <p className="caveat-item">
-              The repository is mid-{dynamicDisqualifiers.operation}; finish or abort it first.
-            </p>
-          ) : null}
-          <p className="muted">Reading state is still safe. Only rehearsals are refused.</p>
+          ))}
         </div>
       ) : null}
 

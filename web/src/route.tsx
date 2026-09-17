@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
-export type Route = "workbench" | "guarantees";
+export type Route = "workbench" | "repository" | "guarantees";
 
 export const ROUTE_PATHS: Record<Route, string> = {
   workbench: "/",
+  repository: "/repository",
   guarantees: "/guarantees"
 };
 
 function parse(pathname: string): Route {
   const path = pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
-  return path === ROUTE_PATHS.guarantees ? "guarantees" : "workbench";
+  if (path === ROUTE_PATHS.guarantees) {
+    return "guarantees";
+  }
+  return path === ROUTE_PATHS.repository ? "repository" : "workbench";
 }
 
-function navigate(path: string): void {
+export function navigate(path: string): void {
   if (window.location.pathname === path) {
     return;
   }
@@ -40,10 +44,12 @@ export function useRoute(): Route {
 export function PageLink({
   to,
   current = false,
+  className,
   children
 }: {
   to: string;
   current?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -62,7 +68,7 @@ export function PageLink({
   };
 
   return (
-    <a href={to} aria-current={current ? "page" : undefined} onClick={onClick}>
+    <a href={to} className={className} aria-current={current ? "page" : undefined} onClick={onClick}>
       {children}
     </a>
   );
