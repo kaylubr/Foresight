@@ -145,7 +145,6 @@ a:hover {
 
 .page.workbench {
   min-height: 100dvh;
-  padding-top: var(--space-4);
   padding-bottom: var(--space-9);
 }
 
