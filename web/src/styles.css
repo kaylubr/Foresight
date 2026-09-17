@@ -79,12 +79,13 @@ body {
 
 a {
   color: var(--text);
-  text-decoration-color: var(--text-faint);
-  text-underline-offset: 2px;
+  text-decoration: none;
 }
 
 a:hover {
+  text-decoration: underline;
   text-decoration-color: var(--text);
+  text-underline-offset: 2px;
 }
 
 .mono {
@@ -205,6 +206,7 @@ a:hover {
 .nav a:hover,
 .nav a[aria-current="page"] {
   color: var(--text);
+  text-decoration: none;
 }
 
 .repo-line-link {
@@ -242,6 +244,10 @@ a:hover {
 .repo-line-marker {
   color: var(--text-faint);
   white-space: nowrap;
+}
+
+.repo-line-link:hover {
+  text-decoration: none;
 }
 
 .repo-line-link:hover .repo-line-path,
