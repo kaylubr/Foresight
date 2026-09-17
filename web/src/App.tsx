@@ -7,6 +7,7 @@ import type {
 } from "../../shared/types";
 import { api } from "./api";
 import brandUrl from "./assets/brand.svg";
+import AboutPage from "./components/AboutPage";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
@@ -259,6 +260,9 @@ export default function App() {
             >
               Guarantees
             </PageLink>
+            <PageLink to={ROUTE_PATHS.about} current={route === "about"}>
+              About
+            </PageLink>
           </nav>
         </div>
         <p
@@ -280,7 +284,9 @@ export default function App() {
         </p>
       </header>
 
-      {route === "repository" ? (
+      {route === "about" ? (
+        <AboutPage />
+      ) : route === "repository" ? (
         <RepositoryPage
           repo={repo}
           busy={busy}
@@ -333,6 +339,10 @@ export default function App() {
                   </button>
                 </div>
                 {error ? <p className="error">{error}</p> : null}
+                <p className="muted">
+                  New here?{" "}
+                  <PageLink to={ROUTE_PATHS.about}>What Foresight is for</PageLink>.
+                </p>
               </section>
             ) : null}
 

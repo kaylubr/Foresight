@@ -77,6 +77,16 @@ body {
   outline-offset: 2px;
 }
 
+a {
+  color: var(--text);
+  text-decoration-color: var(--text-faint);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  text-decoration-color: var(--text);
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

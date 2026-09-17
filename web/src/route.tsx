@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import type { MouseEvent, ReactNode } from "react";
 
-export type Route = "workbench" | "repository" | "guarantees";
+export type Route = "workbench" | "repository" | "guarantees" | "about";
 
 export const ROUTE_PATHS: Record<Route, string> = {
   workbench: "/",
   repository: "/repository",
-  guarantees: "/guarantees"
+  guarantees: "/guarantees",
+  about: "/about"
 };
 
 function parse(pathname: string): Route {
@@ -14,7 +15,10 @@ function parse(pathname: string): Route {
   if (path === ROUTE_PATHS.guarantees) {
     return "guarantees";
   }
-  return path === ROUTE_PATHS.repository ? "repository" : "workbench";
+  if (path === ROUTE_PATHS.repository) {
+    return "repository";
+  }
+  return path === ROUTE_PATHS.about ? "about" : "workbench";
 }
 
 export function navigate(path: string): void {
