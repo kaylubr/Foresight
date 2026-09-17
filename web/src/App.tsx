@@ -456,7 +456,6 @@ export default function App() {
             </section>
 
             <section className="pane info-pane" aria-label="Outcome">
-              <h2 className="label">Outcome</h2>
               {outcome ? (
                 <OutcomePanel
                   outcome={outcome}
