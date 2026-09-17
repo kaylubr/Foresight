@@ -182,6 +182,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
+  margin-bottom: 2rem;
 }
 
 .brand {

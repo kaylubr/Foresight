@@ -281,7 +281,6 @@ export default function CommitGraph({
     <div className="graph-wrap">
       <div className="graph-bar">
         <div className="graph-bar-left">
-          <h2 className="label">Commit graph</h2>
           {hasChanges ? (
             <span className="mono faint">
               {revealed ? "After the rehearsal" : "Before the rehearsal"}
