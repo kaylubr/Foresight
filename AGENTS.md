@@ -13,10 +13,10 @@ See @README.md for project overview and @package.json for available npm/pnpm com
 Foresight is two npm workspace packages plus one folder of shared types.
 
 - `web` is the React and D3 frontend, scaffolded from the Vite `react-ts` template. `web/src/App.tsx` owns the layout: the command input, then command info beside the commit graph.
-- `server` is the Express backend. `src/index.ts` only listens; `src/app.ts` builds the app, its routes, and the static serving of `web/dist`.
+- `core` is the Express backend. `src/index.ts` only listens; `src/app.ts` builds the app, its routes, and the static serving of `web/dist`.
 - `shared` holds the two modules both packages import: `types.ts` and `caveats.ts`.
 
-The backend is organised by domain under `server/src`:
+The backend is organised by domain under `core/src`:
 
 | Folder | Responsibility |
 | --- | --- |
@@ -27,7 +27,7 @@ The backend is organised by domain under `server/src`:
 | `change/` | the diff between before and after, plus the side-effect fingerprints |
 | `pipeline.ts` | the stages in order, from a pasted command to an outcome |
 
-Run these from the repository root: `npm run dev` (both packages), `npm test` (server suites), `npm run build` (frontend), `npm start` (server, serving the built frontend).
+Run these from the repository root: `npm run dev` (both packages), `npm test` (core suites), `npm run build` (frontend), `npm start` (core, serving the built frontend).
 
 Decisions are recorded in `docs/adr/`; the vocabulary is in `CONTEXT.md`.
 
