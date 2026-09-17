@@ -433,41 +433,43 @@ export default function App() {
 
             <section className="pane info-pane" aria-label="Outcome">
               <h2 className="label">Outcome</h2>
-              {outcome ? (
-                <OutcomePanel
-                  outcome={outcome}
-                  stale={
-                    staleness?.stale ? (
-                      <p className="stale">
-                        {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse
-                        again for an accurate result.
-                      </p>
-                    ) : null
-                  }
-                  actions={
-                    <>
-                      <button onClick={() => void copyCommand()}>Copy command</button>
-                      <span
-                        className={`copy-status ${copyStatus}`}
-                        role="status"
-                      >
-                        {copyStatus === "copied"
-                          ? "Copied to clipboard"
-                          : copyStatus === "failed"
-                            ? "Could not copy"
-                            : ""}
-                      </span>
-                    </>
-                  }
-                />
-              ) : (
-                <p className="empty">
-                  Enter a Git command above and rehearse it to see exactly what
-                  it would change. Foresight clones the repository, mirrors your
-                  staged and unstaged state, runs the command in the clone, and
-                  reports the difference.
-                </p>
-              )}
+              <div className="pane-body">
+                {outcome ? (
+                  <OutcomePanel
+                    outcome={outcome}
+                    stale={
+                      staleness?.stale ? (
+                        <p className="stale">
+                          {staleness.changed.join(", ")} changed after the mirror was taken. Rehearse
+                          again for an accurate result.
+                        </p>
+                      ) : null
+                    }
+                    actions={
+                      <>
+                        <button onClick={() => void copyCommand()}>Copy command</button>
+                        <span
+                          className={`copy-status ${copyStatus}`}
+                          role="status"
+                        >
+                          {copyStatus === "copied"
+                            ? "Copied to clipboard"
+                            : copyStatus === "failed"
+                              ? "Could not copy"
+                              : ""}
+                        </span>
+                      </>
+                    }
+                  />
+                ) : (
+                  <p className="empty">
+                    Enter a Git command above and rehearse it to see exactly what
+                    it would change. Foresight clones the repository, mirrors your
+                    staged and unstaged state, runs the command in the clone, and
+                    reports the difference.
+                  </p>
+                )}
+              </div>
             </section>
           </div>
         </>

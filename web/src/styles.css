@@ -344,7 +344,16 @@ body {
 .pane.info-pane {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.pane-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
 }
 
 .has-outcome .pane.graph-pane {
