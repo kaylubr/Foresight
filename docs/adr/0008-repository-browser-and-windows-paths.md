@@ -8,6 +8,10 @@ The selection unit is a directory, not a repository. Marking a child as a reposi
 
 The picker's roots come from probing the host's conventional mount locations (`/mnt`, `/media`, `/run/media`, `/Volumes`) and offering the ones that exist, so the same code shows drive letters on WSL and volumes on macOS without branching on `process.platform`. A mount location that is absent contributes nothing rather than erroring, and the WSL-internal `wsl` and `wslg` mounts are left out.
 
+The filesystem root is named for what it is on the host, so under WSL it reads as the WSL filesystem rather than an ambiguous `/`. The host is observed through a distro name or the kernel string, never through `process.platform`.
+
+Each listing carries a trail from the roots screen down to the current folder, and its first segment returns to the roots screen. That segment is the only route back: the roots screen offers the entry points, but once a folder is entered there is no other way to reach it.
+
 A drive-letter path is translated onto its mount (`C:\Users\you\code` becomes `/mnt/c/Users/you/code`) inside `resolveRepoPath`, but only when that mount exists, so the rewrite applies on WSL and is skipped where `/mnt` is absent. The failure message still names the input **as typed**, so an input that resolves nowhere is reported honestly rather than as a confusing mount path.
 
 ## Consequences
@@ -15,7 +19,8 @@ A drive-letter path is translated onto its mount (`C:\Users\you\code` becomes `/
 - The picker is inline, not a modal and not a route, matching the existing sections on the working surface.
 - A listing is capped, and truncation is reported rather than hidden, so a short list never claims to be complete when it is not.
 - Dotfolders are hidden by default and shown on request.
-- The picker starts from a roots list: the home directory, `/`, and each mounted volume found under a conventional mount location, so a repository on another volume is reachable without typing a prefix.
+- The picker starts from a roots list: the home directory, the filesystem root named for the host, and each mounted volume found under a conventional mount location, so a repository on another volume is reachable without typing a prefix.
+- The trail's first segment returns to the roots screen, and the trail names every level from the filesystem root down, so entering a folder is reversible and no level of the path is hidden.
 - Translation is gated on the mount existing. On a host without the mount the input is used unchanged, and the error names it as typed.
 - macOS can browse and read repositories, because only the network-isolation sandbox is Linux-specific. Running the server natively on Windows is not supported.
 - UNC paths (`\\wsl$\...`, `\\wsl.localhost\...`) are not translated; the browser reaches those repositories instead.
