@@ -5,20 +5,19 @@ import type {
   RepoConnectResult,
   StalenessResult
 } from "../../shared/types";
-import brandUrl from "./assets/brand.svg";
 import AboutPage from "./components/AboutPage";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import PageLink from "./components/PageLink";
+import Masthead from "./components/masthead/Masthead";
 import RepoBrowser from "./components/connect/RepoBrowser";
 import RepositoryPage from "./components/RepositoryPage";
 import OutcomePanel from "./components/outcome/OutcomePanel";
 import { api } from "./lib/api";
 import { errorMessage } from "./lib/errors";
-import { caveatCount, headLabel } from "./lib/repoSummary";
 import { navigate, ROUTE_PATHS, useRoute } from "./lib/route";
-
-type Activity = "connect" | "refresh" | "rehearse";
+import { sessionStatus } from "./lib/status";
+import type { Activity } from "./lib/status";
 
 export default function App() {
   const [repoPath, setRepoPath] = useState("");
@@ -178,112 +177,13 @@ export default function App() {
     }
   }, [outcome, repo]);
 
-  const sandboxReady = health?.sandbox.ok ?? false;
-
-  const status: {
-    tone: "ready" | "busy" | "blocked";
-    word: string;
-    display: "dot" | "spinner" | "word";
-    detail: string | null;
-  } =
-    activity === "connect"
-      ? { tone: "busy", word: "Connecting", display: "spinner", detail: null }
-      : activity === "refresh"
-        ? { tone: "busy", word: "Refreshing", display: "spinner", detail: null }
-        : activity === "rehearse"
-          ? { tone: "busy", word: "Rehearsing", display: "spinner", detail: null }
-          : !healthChecked
-            ? { tone: "busy", word: "Checking", display: "spinner", detail: null }
-            : health === null
-              ? {
-                  tone: "blocked",
-                  word: "Blocked",
-                  display: "word",
-                  detail:
-                    "Foresight could not reach its own API, so it cannot confirm whether rehearsals can run."
-                }
-              : !sandboxReady
-                ? {
-                    tone: "blocked",
-                    word: "Blocked",
-                    display: "word",
-                    detail:
-                      [health.sandbox.reason, health.sandbox.nextStep].filter(Boolean).join(" ") ||
-                      "The network-isolation sandbox could not be confirmed."
-                  }
-                : { tone: "ready", word: "Ready", display: "dot", detail: null };
+  const status = sessionStatus(activity, healthChecked, health);
 
   const changedRefs = outcome?.changeSet?.refs ?? [];
 
   return (
     <div className={route === "workbench" ? "page workbench" : "page"}>
-      <header className="masthead">
-        <div className="masthead-left">
-          <h1 className="brand">
-            <img src={brandUrl} alt="Foresight" />
-          </h1>
-          {repo ? (
-            <PageLink
-              to={ROUTE_PATHS.repository}
-              current={route === "repository"}
-              className="repo-line-link"
-            >
-              <span className="repo-line">
-                <span className="repo-line-path">{repo.path}</span>
-                <span>--→</span>
-                <span className="repo-line-branch">{headLabel(repo)}</span>
-                {caveatCount(repo) > 0 ? (
-                  <span className="repo-line-marker">
-                    fidelity caveats ({caveatCount(repo)})
-                  </span>
-                ) : null}
-              </span>
-            </PageLink>
-          ) : null}
-          <nav className="nav" aria-label="Pages">
-            <PageLink
-              to={ROUTE_PATHS.workbench}
-              current={route === "workbench"}
-            >
-              Rehearsal
-            </PageLink>
-            {repo ? (
-              <PageLink
-                to={ROUTE_PATHS.repository}
-                current={route === "repository"}
-              >
-                Repository
-              </PageLink>
-            ) : null}
-            <PageLink
-              to={ROUTE_PATHS.guarantees}
-              current={route === "guarantees"}
-            >
-              Guarantees
-            </PageLink>
-            <PageLink to={ROUTE_PATHS.about} current={route === "about"}>
-              About
-            </PageLink>
-          </nav>
-        </div>
-        <p
-          className={`status ${status.tone} ${status.display}`}
-          role="status"
-          tabIndex={status.detail ? 0 : undefined}
-          aria-describedby={status.detail ? "status-detail" : undefined}
-        >
-          {status.display === "word" ? (
-            status.word
-          ) : (
-            <span className="visually-hidden">{status.word}</span>
-          )}
-          {status.detail ? (
-            <span className="status-tip" id="status-detail" role="tooltip">
-              {status.detail}
-            </span>
-          ) : null}
-        </p>
-      </header>
+      <Masthead repo={repo} route={route} status={status} />
 
       {route === "about" ? (
         <AboutPage />
