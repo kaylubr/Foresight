@@ -1,8 +1,13 @@
 import { useEffect } from "react";
 import type { RepoConnectResult } from "../../../shared/types";
 import { PageLink, ROUTE_PATHS } from "../route";
-import { summaryParts } from "../repoSummary";
-import RepoState from "./RepoState";
+import { headLine } from "../repoSummary";
+import FidelityCaveats from "./FidelityCaveats";
+import InfoTip from "./InfoTip";
+import RepoFacts from "./RepoFacts";
+
+const PURPOSE = "Foresight reads this repository and never writes to it.";
+const CHANGE = "Disconnects this repository and returns you to the rehearsal screen.";
 
 export default function RepositoryPage({
   repo,
@@ -32,27 +37,26 @@ export default function RepositoryPage({
     );
   }
 
-  const parts = summaryParts(repo);
-
   return (
-    <section className="section">
-      <div className="repo-head">
-        <p className="repo-path">{repo.path}</p>
-        <div className="actions">
-          <button className="quiet" onClick={onDisconnect} disabled={busy}>
-            Change repository
-          </button>
+    <div className="repo-page">
+      <section className="repo-frame" aria-label="Repository facts">
+        <div className="repo-frame-head">
+          <h1 className="page-title">{repo.name}</h1>
+          <InfoTip label={`${PURPOSE} Path: ${repo.path}`} align="start">
+            <span className="repo-tip-path">{repo.path}</span>
+            {PURPOSE}
+          </InfoTip>
+          <div className="repo-frame-actions">
+            <button className="quiet" onClick={onDisconnect} disabled={busy}>
+              Change repository
+            </button>
+            <InfoTip label={CHANGE}>{CHANGE}</InfoTip>
+          </div>
         </div>
-      </div>
-      <p className="repo-summary">
-        {parts.map((part, index) => (
-          <span key={part}>
-            {index > 0 ? <span className="sep">&middot;</span> : null}
-            {part}
-          </span>
-        ))}
-      </p>
-      <RepoState repo={repo} />
-    </section>
+        <p className="repo-identity">{headLine(repo)}</p>
+        <RepoFacts repo={repo} />
+      </section>
+      <FidelityCaveats repo={repo} />
+    </div>
   );
 }
