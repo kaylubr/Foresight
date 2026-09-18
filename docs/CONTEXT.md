@@ -60,6 +60,10 @@ _Avoid_: Limitation, gotcha
 The narrow promise that git's own object-store-rewriting commands, run in a rehearsal clone, cannot alter the original repository's object bytes. It does not cover shell execution, filesystem writes, network access, or anything outside git's object model.
 _Avoid_: Sandbox, safety guarantee, security boundary
 
+**Sandbox**:
+The mechanism that denies the rehearsal child any network access at the operating-system level. Distinct from the Isolation guarantee: this one is about the network, not about what a command can change in the original.
+_Avoid_: Isolation guarantee, security boundary
+
 **Modelled state**:
 The four state surfaces Foresight compares to build a preview: refs, HEAD, the index, and the working directory.
 _Avoid_: Repo state, tracked state

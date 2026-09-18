@@ -9,6 +9,7 @@ Hardlinking is best-effort, not forced: the clone does **not** pass `--local`. G
 ## Consequences
 
 - Remote commands are excluded from the allowlist, `origin` is severed in the clone, and the network is denied to the child process.
+- The word is retired for the clone's isolation, not for the network denial that [0005](./0005-sanitized-children-no-network.md) covers.
 - Repositories with submodules, LFS, or linked worktrees are refused, since each breaks an assumption behind the clone-and-compare approach.
 - **Upgrade trigger:** accepting commands the user has not read moves this to OS-level isolation — container, unprivileged user, no network, read-only mount of the original.
 
