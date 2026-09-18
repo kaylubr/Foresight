@@ -216,6 +216,19 @@ export interface StalenessRequest {
   snapshot: ModelledState;
 }
 
+export interface BrowseEntry {
+  name: string;
+  path: string;
+  isRepo: boolean;
+}
+
+export interface BrowseResult {
+  path: string | null;
+  parent: string | null;
+  truncated: boolean;
+  entries: BrowseEntry[];
+}
+
 export interface ApiError {
   error: string;
 }

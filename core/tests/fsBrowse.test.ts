@@ -1,0 +1,82 @@
+import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { homedir, tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterAll, describe, expect, it } from "vitest";
+import { browse, browseRoots, listDirectories } from "../src/platform/fsBrowse";
+
+const created: string[] = [];
+
+function makeTree(): string {
+  const root = mkdtempSync(join(tmpdir(), "foresight-browse-"));
+  created.push(root);
+  mkdirSync(join(root, "alpha"));
+  mkdirSync(join(root, "beta"));
+  mkdirSync(join(root, ".hidden"));
+  mkdirSync(join(root, "repo"));
+  mkdirSync(join(root, "repo", ".git"));
+  return root;
+}
+
+const isRoot = typeof process.getuid === "function" && process.getuid() === 0;
+
+afterAll(() => {
+  for (const dir of created) {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+describe("browseRoots", () => {
+  it("offers the home directory and the filesystem root", async () => {
+    const paths = (await browseRoots()).map((entry) => entry.path);
+    expect(paths).toContain(homedir());
+    expect(paths).toContain("/");
+  });
+
+  it("returns the roots when no target is given", async () => {
+    const listing = await browse(null);
+    expect(listing.path).toBeNull();
+    expect(listing.parent).toBeNull();
+    expect(listing.entries.map((entry) => entry.path)).toContain(homedir());
+  });
+});
+
+describe("listDirectories", () => {
+  it("lists child directories, hides dotfolders, and marks repositories", async () => {
+    const root = makeTree();
+    const listing = await listDirectories(root);
+    expect(listing.path).toBe(root);
+    expect(listing.parent).toBe(tmpdir());
+    expect(listing.truncated).toBe(false);
+    expect(listing.entries.map((entry) => entry.name)).toEqual(["alpha", "beta", "repo"]);
+    expect(listing.entries.find((entry) => entry.name === "repo")?.isRepo).toBe(true);
+    expect(listing.entries.find((entry) => entry.name === "alpha")?.isRepo).toBe(false);
+  });
+
+  it("includes dotfolders when asked", async () => {
+    const root = makeTree();
+    const listing = await listDirectories(root, true);
+    expect(listing.entries.map((entry) => entry.name)).toEqual([".hidden", "alpha", "beta", "repo"]);
+  });
+
+  it("reports no parent at the filesystem root", async () => {
+    const listing = await listDirectories("/");
+    expect(listing.path).toBe("/");
+    expect(listing.parent).toBeNull();
+  });
+
+  it("fails loud on a directory it cannot read", async () => {
+    const missing = join(makeTree(), "nope");
+    await expect(listDirectories(missing)).rejects.toThrow(`cannot read directory: ${missing}`);
+  });
+
+  it.runIf(!isRoot)("fails loud on a directory without permission", async () => {
+    const locked = join(makeTree(), "locked");
+    mkdirSync(locked);
+    chmodSync(locked, 0o000);
+    try {
+      await expect(listDirectories(locked)).rejects.toThrow(`cannot read directory: ${locked}`);
+    } finally {
+      chmodSync(locked, 0o700);
+    }
+  });
+});

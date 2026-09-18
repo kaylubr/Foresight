@@ -9,6 +9,7 @@ import type {
   StalenessRequest
 } from "../../shared/types";
 import { checkStaleness, connectRepo, currentDenialProbe, previewCommand } from "./pipeline";
+import { browse } from "./platform/fsBrowse";
 import type { DenialProbe } from "./rehearsal/sandbox";
 
 function describe(error: unknown): string {
@@ -39,6 +40,16 @@ export function createApp(): express.Express {
 
   app.post("/api/probe", async (_request, response) => {
     response.json(toHealth(await currentDenialProbe(true)));
+  });
+
+  app.get("/api/browse", async (request, response) => {
+    const raw = request.query.path;
+    const target = typeof raw === "string" && raw.length > 0 ? raw : null;
+    try {
+      response.json(await browse(target, request.query.hidden === "1"));
+    } catch (error) {
+      response.status(400).json({ error: describe(error) });
+    }
   });
 
   app.post("/api/connect", async (request, response) => {
