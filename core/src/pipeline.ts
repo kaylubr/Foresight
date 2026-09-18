@@ -16,6 +16,7 @@ import { classifyRun } from "./rehearsal/classify";
 import { buildChangeSet, compareFingerprints, compareModelledState, detectBlockingAnomaly } from "./change/diff";
 import { explainFailure } from "./command/explain";
 import { readGit } from "./platform/git";
+import { fromWindowsPath } from "./platform/winpath";
 import { createMirror, MirrorFailure } from "./rehearsal/mirror";
 import { evaluateGuards } from "./command/guards";
 import { prepareCommand } from "./command/parseCommand";
@@ -41,7 +42,7 @@ export function currentDenialProbe(force = false): Promise<DenialProbe> {
 }
 
 export async function resolveRepoPath(input: string): Promise<string> {
-  const result = await readGit(["rev-parse", "--show-toplevel"], input);
+  const result = await readGit(["rev-parse", "--show-toplevel"], fromWindowsPath(input));
   if (result.code !== 0) {
     throw new Error(`not a git repository: ${input}`);
   }
