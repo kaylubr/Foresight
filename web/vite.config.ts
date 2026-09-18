@@ -9,7 +9,7 @@ export default defineConfig({
       allow: ['..'],
     },
     proxy: {
-      '/api': 'http://localhost:4317',
+      '/api': 'http://127.0.0.1:4317',
     },
   },
 })
