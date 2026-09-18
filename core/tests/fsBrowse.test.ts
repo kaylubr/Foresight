@@ -1,8 +1,9 @@
-import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { browse, listDirectories, rootsFrom, trailFor } from "../src/platform/fsBrowse";
+import { readMountTable } from "../src/platform/mounts";
 
 const created: string[] = [];
 
@@ -17,16 +18,8 @@ function makeTree(): string {
   return root;
 }
 
-function makeMountParent(...names: string[]): string {
-  const parent = mkdtempSync(join(tmpdir(), "foresight-mount-"));
-  created.push(parent);
-  for (const name of names) {
-    mkdirSync(join(parent, name));
-  }
-  return parent;
-}
-
 const isRoot = typeof process.getuid === "function" && process.getuid() === 0;
+const hasMountTable = existsSync("/proc/mounts");
 
 afterAll(() => {
   for (const dir of created) {
@@ -44,6 +37,17 @@ describe("browse", () => {
     expect(paths).toContain("/");
   });
 
+  it.runIf(hasMountTable)("offers only paths the mount table reports as mounted", async () => {
+    const listing = await browse(null);
+    const table = await readMountTable();
+    const volumes = listing.entries
+      .map((entry) => entry.path)
+      .filter((path) => path !== homedir() && path !== "/");
+    for (const volume of volumes) {
+      expect(table.has(volume)).toBe(true);
+    }
+  });
+
   it("returns a trail from the roots screen down to the current folder", async () => {
     const root = makeTree();
     const listing = await browse(root);
@@ -55,53 +59,47 @@ describe("browse", () => {
 
 describe("rootsFrom", () => {
   it("always starts from the home directory and the named filesystem root", async () => {
-    const roots = await rootsFrom([], "/home/kyle", "Filesystem");
+    const roots = await rootsFrom([], "/home/kyle", "Filesystem", []);
     expect(roots.map((entry) => entry.path)).toEqual(["/home/kyle", "/"]);
     expect(roots.map((entry) => entry.name)).toEqual(["Home", "Filesystem"]);
   });
 
   it("names the filesystem root for the host", async () => {
-    const roots = await rootsFrom([], "/home/kyle", "WSL filesystem");
+    const roots = await rootsFrom([], "/home/kyle", "WSL filesystem", []);
     expect(roots[1].name).toBe("WSL filesystem");
   });
 
-  it("offers a volume-shaped parent's children verbatim", async () => {
-    const parent = makeMountParent("Backup", "C", "Macintosh HD");
-    const names = (await rootsFrom([{ path: parent }], "/home/kyle", "Filesystem")).map(
-      (entry) => entry.name
-    );
-    expect(names).toContain("Backup");
-    expect(names).toContain("Macintosh HD");
-    expect(names).toContain("C");
-    expect(names).not.toContain("C:");
-  });
-
-  it("labels single letters as drives when the parent asks for it", async () => {
-    const parent = makeMountParent("c", "d");
-    const names = (
-      await rootsFrom([{ path: parent, driveLabels: true }], "/home/kyle", "Filesystem")
-    ).map((entry) => entry.name);
-    expect(names).toContain("C:");
-    expect(names).toContain("D:");
-    expect(names).not.toContain("c");
-  });
-
-  it("hides the names a parent asks to hide", async () => {
-    const parent = makeMountParent("c", "wsl", "wslg");
+  it("offers a volume that is a direct child of a mount parent", async () => {
     const roots = await rootsFrom(
-      [{ path: parent, driveLabels: true, hide: ["wsl", "wslg"] }],
+      [{ path: "/mnt", driveLabels: true }],
       "/home/kyle",
-      "Filesystem"
+      "Filesystem",
+      ["/mnt/c"]
     );
-    expect(roots.map((entry) => entry.name)).toEqual(["Home", "Filesystem", "C:"]);
+    expect(roots.map((entry) => entry.path)).toContain("/mnt/c");
+    expect(roots.map((entry) => entry.name)).toContain("C:");
   });
 
-  it("ignores a mount parent that does not exist", async () => {
-    const parent = makeMountParent();
-    const paths = (
-      await rootsFrom([{ path: join(parent, "absent") }], "/home/kyle", "Filesystem")
-    ).map((entry) => entry.path);
-    expect(paths).toEqual(["/home/kyle", "/"]);
+  it("labels a volume by its name when the parent does not label drives", async () => {
+    const roots = await rootsFrom([{ path: "/Volumes" }], "/home/kyle", "Filesystem", [
+      "/Volumes/Backup"
+    ]);
+    expect(roots.map((entry) => entry.name)).toContain("Backup");
+  });
+
+  it("drops a mount point nested below a parent", async () => {
+    const roots = await rootsFrom(
+      [{ path: "/mnt", driveLabels: true }],
+      "/home/kyle",
+      "Filesystem",
+      ["/mnt/c/Users"]
+    );
+    expect(roots.map((entry) => entry.path)).toEqual(["/home/kyle", "/"]);
+  });
+
+  it("drops a mount point that is not under a parent", async () => {
+    const roots = await rootsFrom([{ path: "/mnt" }], "/home/kyle", "Filesystem", ["/opt/data"]);
+    expect(roots.map((entry) => entry.path)).toEqual(["/home/kyle", "/"]);
   });
 });
 
