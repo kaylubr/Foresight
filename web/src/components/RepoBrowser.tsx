@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import type { BrowseResult } from "../../../shared/types";
 import { api } from "../api";
 
@@ -36,53 +36,38 @@ export default function RepoBrowser({ onChoose }: { onChoose: (path: string) => 
   const listing = loaded?.listing ?? null;
   const error = failed?.key === key ? failed.message : null;
   const loading = loaded?.key !== key && error === null;
-  const parent = loaded?.key === key ? listing?.parent ?? null : null;
   const entries = listing?.entries ?? [];
+  const trail = listing?.trail ?? [];
 
   return (
     <div className="repo-browser">
-      <div className="browse-head">
-        <p className="browse-path">{current ?? "Choose a starting folder"}</p>
-        <div className="browse-tools">
-          <button
-            type="button"
-            className="icon-button"
-            disabled={loading || parent === null}
-            onClick={() => {
-              if (parent !== null) {
-                setCurrent(parent);
-              }
-            }}
-            aria-label="Go to the parent folder"
-          >
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 19V5" />
-              <path d="m5 12 7-7 7 7" />
-            </svg>
-            <span className="icon-tip" role="tooltip">
-              Go to the parent folder
-            </span>
-          </button>
-          <label className="browse-hidden">
-            <input
-              type="checkbox"
-              checked={hidden}
-              onChange={(event) => setHidden(event.target.checked)}
-            />
-            Show hidden folders
-          </label>
-        </div>
-      </div>
+      {current !== null && trail.length > 0 ? (
+        <nav className="browse-trail" aria-label="Folder trail">
+          {trail.map((entry, index) => {
+            const last = index === trail.length - 1;
+            return (
+              <Fragment key={entry.path ?? "roots"}>
+                {last ? (
+                  <span aria-current="location">{entry.label}</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="browse-ancestor"
+                    onClick={() => setCurrent(entry.path)}
+                  >
+                    {entry.label}
+                  </button>
+                )}
+                {last ? null : (
+                  <span className="browse-separator" aria-hidden="true">
+                    /
+                  </span>
+                )}
+              </Fragment>
+            );
+          })}
+        </nav>
+      ) : null}
 
       {error ? <p className="error">{error}</p> : null}
 
@@ -108,11 +93,20 @@ export default function RepoBrowser({ onChoose }: { onChoose: (path: string) => 
         <p className="browse-note">Showing the first {entries.length} folders.</p>
       ) : null}
 
-      <div className="browse-actions">
+      <label className="browse-hidden">
+        <input
+          type="checkbox"
+          checked={hidden}
+          onChange={(event) => setHidden(event.target.checked)}
+        />
+        Show hidden folders
+      </label>
+
+      {current !== null ? (
         <button
           type="button"
-          className="primary"
-          disabled={current === null || loading}
+          className="primary browse-connect"
+          disabled={loading}
           onClick={() => {
             if (current !== null) {
               onChoose(current);
@@ -121,7 +115,7 @@ export default function RepoBrowser({ onChoose }: { onChoose: (path: string) => 
         >
           Connect this folder
         </button>
-      </div>
+      ) : null}
     </div>
   );
 }
