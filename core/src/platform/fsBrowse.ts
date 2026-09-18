@@ -6,7 +6,19 @@ import type { BrowseEntry, BrowseResult } from "../../../shared/types";
 import { pathExists } from "./fsutil";
 
 const MAX_ENTRIES = 500;
-const MOUNT_POINTS = ["/mnt", "/media"];
+
+interface MountParent {
+  path: string;
+  driveLabels?: boolean;
+  hide?: string[];
+}
+
+const MOUNT_PARENTS: MountParent[] = [
+  { path: "/mnt", driveLabels: true, hide: ["wsl", "wslg"] },
+  { path: "/media" },
+  { path: "/run/media" },
+  { path: "/Volumes" }
+];
 
 async function isDirectory(path: string): Promise<boolean> {
   try {
@@ -39,14 +51,20 @@ function parentOf(path: string): string | null {
   return parent === path ? null : parent;
 }
 
-export async function browseRoots(): Promise<BrowseEntry[]> {
+export async function rootsFrom(parents: MountParent[], home: string): Promise<BrowseEntry[]> {
   const candidates: Array<{ name: string; path: string }> = [
-    { name: "Home", path: homedir() },
+    { name: "Home", path: home },
     { name: "/", path: "/" }
   ];
-  for (const mount of MOUNT_POINTS) {
-    for (const name of await childDirectoryNames(mount)) {
-      candidates.push({ name: driveLabel(name), path: join(mount, name) });
+  for (const parent of parents) {
+    for (const name of await childDirectoryNames(parent.path)) {
+      if (parent.hide?.includes(name)) {
+        continue;
+      }
+      candidates.push({
+        name: parent.driveLabels ? driveLabel(name) : name,
+        path: join(parent.path, name)
+      });
     }
   }
   const seen = new Set<string>();
@@ -59,6 +77,10 @@ export async function browseRoots(): Promise<BrowseEntry[]> {
     roots.push({ ...candidate, isRepo: await isRepository(candidate.path) });
   }
   return roots;
+}
+
+export async function browseRoots(): Promise<BrowseEntry[]> {
+  return rootsFrom(MOUNT_PARENTS, homedir());
 }
 
 async function directoryNames(dir: string, includeHidden: boolean): Promise<string[]> {

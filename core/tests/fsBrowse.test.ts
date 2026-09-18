@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { browse, browseRoots, listDirectories } from "../src/platform/fsBrowse";
+import { browse, browseRoots, listDirectories, rootsFrom } from "../src/platform/fsBrowse";
 
 const created: string[] = [];
 
@@ -15,6 +15,15 @@ function makeTree(): string {
   mkdirSync(join(root, "repo"));
   mkdirSync(join(root, "repo", ".git"));
   return root;
+}
+
+function makeMountParent(...names: string[]): string {
+  const parent = mkdtempSync(join(tmpdir(), "foresight-mount-"));
+  created.push(parent);
+  for (const name of names) {
+    mkdirSync(join(parent, name));
+  }
+  return parent;
 }
 
 const isRoot = typeof process.getuid === "function" && process.getuid() === 0;
@@ -37,6 +46,49 @@ describe("browseRoots", () => {
     expect(listing.path).toBeNull();
     expect(listing.parent).toBeNull();
     expect(listing.entries.map((entry) => entry.path)).toContain(homedir());
+  });
+});
+
+describe("rootsFrom", () => {
+  it("always starts from the home directory and the filesystem root", async () => {
+    const paths = (await rootsFrom([], "/home/kyle")).map((entry) => entry.path);
+    expect(paths).toEqual(["/home/kyle", "/"]);
+  });
+
+  it("offers a volume-shaped parent's children verbatim", async () => {
+    const parent = makeMountParent("Backup", "C", "Macintosh HD");
+    const names = (await rootsFrom([{ path: parent }], "/home/kyle")).map((entry) => entry.name);
+    expect(names).toContain("Backup");
+    expect(names).toContain("Macintosh HD");
+    expect(names).toContain("C");
+    expect(names).not.toContain("C:");
+  });
+
+  it("labels single letters as drives when the parent asks for it", async () => {
+    const parent = makeMountParent("c", "d");
+    const names = (await rootsFrom([{ path: parent, driveLabels: true }], "/home/kyle")).map(
+      (entry) => entry.name
+    );
+    expect(names).toContain("C:");
+    expect(names).toContain("D:");
+    expect(names).not.toContain("c");
+  });
+
+  it("hides the names a parent asks to hide", async () => {
+    const parent = makeMountParent("c", "wsl", "wslg");
+    const roots = await rootsFrom(
+      [{ path: parent, driveLabels: true, hide: ["wsl", "wslg"] }],
+      "/home/kyle"
+    );
+    expect(roots.map((entry) => entry.name)).toEqual(["Home", "/", "C:"]);
+  });
+
+  it("ignores a mount parent that does not exist", async () => {
+    const parent = makeMountParent();
+    const paths = (await rootsFrom([{ path: join(parent, "absent") }], "/home/kyle")).map(
+      (entry) => entry.path
+    );
+    expect(paths).toEqual(["/home/kyle", "/"]);
   });
 });
 
