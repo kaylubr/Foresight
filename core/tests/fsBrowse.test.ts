@@ -58,6 +58,17 @@ describe("listDirectories", () => {
     expect(listing.entries.map((entry) => entry.name)).toEqual([".hidden", "alpha", "beta", "repo"]);
   });
 
+  it("caps a very large directory and says so", async () => {
+    const root = mkdtempSync(join(tmpdir(), "foresight-browse-many-"));
+    created.push(root);
+    for (let index = 0; index < 505; index += 1) {
+      mkdirSync(join(root, `dir-${String(index).padStart(3, "0")}`));
+    }
+    const listing = await listDirectories(root);
+    expect(listing.truncated).toBe(true);
+    expect(listing.entries).toHaveLength(500);
+  });
+
   it("reports no parent at the filesystem root", async () => {
     const listing = await listDirectories("/");
     expect(listing.path).toBe("/");
