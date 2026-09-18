@@ -236,7 +236,7 @@ export default function App() {
                 <span className="repo-line-branch">{headLabel(repo)}</span>
                 {caveatCount(repo) > 0 ? (
                   <span className="repo-line-marker">
-                    caveats ({caveatCount(repo)})
+                    fidelity caveats ({caveatCount(repo)})
                   </span>
                 ) : null}
               </span>
