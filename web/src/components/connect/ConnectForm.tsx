@@ -2,6 +2,7 @@ import { ROUTE_PATHS } from "../../lib/route";
 import InfoTip from "../InfoTip";
 import PageLink from "../PageLink";
 import RepoBrowser from "./RepoBrowser";
+import "./ConnectForm.css";
 
 const FIELD_TIP =
   "Point Foresight at a local Git working copy. It reads the repository to show its state and never writes to it.";

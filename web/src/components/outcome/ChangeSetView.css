@@ -1,0 +1,63 @@
+.changes-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cs-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+}
+
+.cs-entry:last-child {
+  border-bottom: 0;
+}
+
+.cs-key {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cs-transition {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-4);
+}
+
+.cs-from {
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.cs-arrow {
+  color: var(--text-faint);
+}
+
+.cs-to {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cs-to.faint {
+  color: var(--text-faint);
+}
+
+.cs-note {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-faint);
+}
+
+.changes-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-1);
+}

@@ -1,4 +1,5 @@
 import type { SessionStatus } from "../../lib/status";
+import "./StatusIndicator.css";
 
 export default function StatusIndicator({ status }: { status: SessionStatus }) {
   return (

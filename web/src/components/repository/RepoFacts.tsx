@@ -3,6 +3,7 @@ import type { RepoConnectResult } from "../../../../shared/types";
 import { factRows, refGroups } from "../../lib/repoSummary";
 import { STATUS_LEGEND, statusWord } from "../../lib/statusCodes";
 import InfoTip from "../InfoTip";
+import "./RepoFacts.css";
 
 function FactsTable({ children }: { children: ReactNode }) {
   return <div className="state-table">{children}</div>;

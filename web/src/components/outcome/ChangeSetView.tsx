@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { ChangeSet } from "../../../../shared/types";
 import { shortHash } from "../../lib/format";
 import { statusWord } from "../../lib/statusCodes";
+import "./ChangeSetView.css";
 
 function word(status: string): string {
   return statusWord(status) ?? status;

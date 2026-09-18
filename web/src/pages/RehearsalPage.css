@@ -1,0 +1,187 @@
+.page.rehearsal {
+  min-height: 100dvh;
+  padding-bottom: var(--space-9);
+}
+
+.rehearsal-controls {
+  flex: none;
+}
+
+.rehearsal-controls > .section {
+  margin-top: var(--space-4);
+  padding-top: 0;
+}
+
+.rehearsal-controls > .section:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.copy-status {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.copy-status.copied {
+  color: var(--ok);
+}
+
+.copy-status.failed {
+  color: var(--bad);
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pane.graph-pane {
+  flex: none;
+}
+
+.pane.info-pane {
+  flex: none;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.editor {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  border-bottom: 2px solid var(--control);
+  padding-top: 18px;
+  padding-bottom: 4px;
+}
+
+.editor:focus-within {
+  border-bottom-color: var(--text);
+}
+
+.prompt {
+  font-family: var(--font-mono);
+  font-size: var(--t-command);
+  color: var(--text-faint);
+  user-select: none;
+}
+
+.editor .control {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.editor .info {
+  right: 0;
+}
+
+.editor input {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: var(--t-command);
+  line-height: 1.35;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  padding: 0 40px 0 0;
+}
+
+.editor input::placeholder {
+  color: transparent;
+}
+
+.editor input:focus::placeholder {
+  color: var(--text-faint);
+}
+
+.editor input:focus,
+.editor input:focus-visible {
+  outline: none;
+}
+
+.editor .control label {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-size: var(--t-command);
+  color: var(--text-faint);
+}
+
+.editor .control input:focus + label,
+.editor .control input:not(:placeholder-shown) + label {
+  top: 0;
+  transform: translateY(-100%);
+  font-size: var(--t-label);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.rehearsal-controls .actions {
+  margin-top: 0;
+}
+
+.rehearse {
+  position: relative;
+  display: inline-flex;
+}
+
+.rehearse-tip {
+  position: absolute;
+  bottom: 0;
+  left: calc(100% + 10px);
+  z-index: 10;
+  width: max-content;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.rehearse:hover .rehearse-tip,
+.rehearse:focus-within .rehearse-tip {
+  opacity: 1;
+}
+
+@media (max-width: 720px) {
+  .prompt,
+  .editor input,
+  .editor .control label {
+    font-size: var(--t-outcome);
+  }
+}

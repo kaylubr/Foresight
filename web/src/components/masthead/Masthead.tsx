@@ -6,6 +6,7 @@ import type { Route } from "../../lib/route";
 import type { SessionStatus } from "../../lib/status";
 import PageLink from "../PageLink";
 import StatusIndicator from "./StatusIndicator";
+import "./Masthead.css";
 
 export default function Masthead({
   repo,

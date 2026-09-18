@@ -1,6 +1,7 @@
 import { curveBumpY, line } from "d3";
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import type { CommitNode, GraphData, RefChange } from "../../../shared/types";
+import "./CommitGraph.css";
 
 const MIN_COLUMN_WIDTH = 44;
 const COLUMN_GAP = 16;

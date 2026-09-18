@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from "react";
 import type { BrowseResult } from "../../../../shared/types";
 import { api } from "../../lib/api";
 import { errorMessage } from "../../lib/errors";
+import "./RepoBrowser.css";
 
 export default function RepoBrowser({ onChoose }: { onChoose: (path: string) => void }) {
   const [current, setCurrent] = useState<string | null>(null);

@@ -1,0 +1,28 @@
+.prose .guarantee {
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--line-strong);
+  color: var(--text);
+}
+
+.prose .caveats {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.prose .caveat-row {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.prose .caveats dt {
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.prose .caveats dd {
+  margin: 0;
+  font-size: var(--t-body);
+  color: var(--text-muted);
+}

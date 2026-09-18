@@ -1,0 +1,23 @@
+.field.repo-path-field .control input {
+  padding: 26px 44px 8px 16px;
+}
+
+.field.repo-path-field .control label {
+  left: 17px;
+}
+
+.field.repo-path-field .control input:focus + label,
+.field.repo-path-field .control input:not(:placeholder-shown) + label {
+  top: 10px;
+}
+
+.connect-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-4);
+}
+
+.connect-row .repo-path-field {
+  flex: 1 1 auto;
+  min-width: 0;
+}

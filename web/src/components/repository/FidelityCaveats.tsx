@@ -1,6 +1,7 @@
 import type { RepoConnectResult } from "../../../../shared/types";
 import { fidelityCaveats } from "../../lib/fidelityCaveats";
 import InfoTip from "../InfoTip";
+import "./FidelityCaveats.css";
 
 const EXPLAINER = "A rehearsal still runs, but these can make it differ from a real run.";
 

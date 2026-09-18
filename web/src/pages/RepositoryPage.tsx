@@ -6,6 +6,7 @@ import FidelityCaveats from "../components/repository/FidelityCaveats";
 import RepoFacts from "../components/repository/RepoFacts";
 import { headLine } from "../lib/repoSummary";
 import { ROUTE_PATHS } from "../lib/route";
+import "./RepositoryPage.css";
 
 const PURPOSE = "Foresight reads this repository and never writes to it.";
 const CHANGE = "Disconnects this repository and returns you to the rehearsal screen.";

@@ -4,6 +4,7 @@ import InfoTip from "../components/InfoTip";
 import ConnectForm from "../components/connect/ConnectForm";
 import OutcomePanel from "../components/outcome/OutcomePanel";
 import type { RehearsalSession } from "./useRehearsalSession";
+import "./RehearsalPage.css";
 
 const COMMAND_TIP = "Runs in a throwaway clone. Your repository is not modified by the rehearsal.";
 

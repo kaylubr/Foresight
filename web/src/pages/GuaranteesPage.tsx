@@ -1,4 +1,5 @@
 import { CAVEAT_CATALOG } from "../../../shared/caveats";
+import "./GuaranteesPage.css";
 
 export default function GuaranteesPage() {
   return (

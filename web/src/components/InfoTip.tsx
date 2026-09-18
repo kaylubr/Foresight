@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import "./InfoTip.css";
 
 export default function InfoTip({
   label,

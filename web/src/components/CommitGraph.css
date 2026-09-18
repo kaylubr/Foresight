@@ -1,0 +1,200 @@
+.graph-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: var(--space-1);
+}
+
+.graph-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--t-label);
+}
+
+.graph-bar-left {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.graph-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+.graph-key .key-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.graph-glyph {
+  display: block;
+  flex: none;
+}
+
+.graph {
+  position: relative;
+  display: flex;
+  flex: none;
+  height: clamp(260px, 40vh, 560px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.graph svg {
+  display: block;
+  flex: none;
+  margin-block: auto;
+}
+
+.graph-tip {
+  position: fixed;
+  z-index: 20;
+  transform: translate(-50%, 14px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1);
+  width: max-content;
+  max-width: 360px;
+  padding: 4px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text);
+  pointer-events: none;
+}
+
+.graph-tip .sha {
+  color: var(--text-muted);
+}
+
+.graph-tip .track {
+  color: var(--text-faint);
+}
+
+.graph-tip .refs {
+  color: var(--text-muted);
+}
+
+.graph-tip .state {
+  color: var(--text-faint);
+}
+
+.graph-tip .state.added {
+  color: var(--ok);
+}
+
+.commits {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  max-height: 320px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+}
+
+.commits-head {
+  flex: none;
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--line);
+}
+
+.commits-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.commits-body table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+}
+
+.commits-body th,
+.commits-body td {
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: start;
+  vertical-align: baseline;
+}
+
+.commits-body th:first-child,
+.commits-body td:first-child {
+  padding-inline-start: var(--space-4);
+}
+
+.commits-body th:last-child,
+.commits-body td:last-child {
+  padding-inline-end: var(--space-4);
+}
+
+.commits-body th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.commits-body td.sha,
+.commits-body td.track,
+.commits-body td.state {
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+
+.commits-body td.state.added {
+  color: var(--ok);
+}
+
+.commits-body td.state.removed {
+  color: var(--text-faint);
+}
+
+.commits-body td.subject {
+  color: var(--text);
+}
+
+.commits-body .ref-change {
+  color: var(--warn);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .graph-edge,
+  .graph-node,
+  .graph-label {
+    transition:
+      opacity 320ms ease,
+      transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .graph-fill {
+    transition: fill-opacity 320ms ease;
+  }
+
+  .graph-head {
+    transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}

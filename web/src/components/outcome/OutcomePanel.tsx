@@ -3,6 +3,7 @@ import type { ChangeSet, RehearsalOutcome } from "../../../../shared/types";
 import { TOOL_ERROR_LABELS } from "../../lib/api";
 import { shortHash } from "../../lib/format";
 import ChangeSetView from "./ChangeSetView";
+import "./OutcomePanel.css";
 
 const UNMERGED_PREVIEW = 5;
 

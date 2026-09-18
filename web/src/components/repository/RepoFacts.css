@@ -1,0 +1,92 @@
+.state-table {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+}
+
+.state-row {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.state-row:last-child {
+  border-bottom: 0;
+}
+
+.state-row .key {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-faint);
+}
+
+.state-row .value {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.repo-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.repo-list-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: var(--space-1) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.repo-list-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.repo-list-body {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 0 var(--space-4) var(--space-1);
+}
+
+.repo-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.repo-subhead {
+  margin: var(--space-4) 0 var(--space-1);
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.repo-group:first-child .repo-subhead {
+  margin-top: var(--space-1);
+}
+
+.repo-code {
+  color: var(--text);
+}
+
+.repo-word {
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .state-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+}

@@ -1,0 +1,78 @@
+.status {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.status::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status.ready {
+  color: var(--ok);
+}
+
+.status.busy {
+  color: var(--text);
+}
+
+.status.blocked {
+  color: var(--warn);
+}
+
+.status.spinner::before {
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  background: transparent;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status.spinner::before {
+    animation: status-spin 700ms linear infinite;
+  }
+}
+
+@keyframes status-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-tip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 10;
+  width: max-content;
+  max-width: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: var(--t-label);
+  line-height: 1.5;
+  text-align: start;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.status:hover .status-tip,
+.status:focus-visible .status-tip {
+  opacity: 1;
+}

@@ -1,0 +1,98 @@
+.repo-browser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.browse-trail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.browse-separator {
+  color: var(--text-faint);
+}
+
+.browse-ancestor {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: var(--t-body);
+  color: var(--text-muted);
+}
+
+.browse-ancestor:hover:not(:disabled) {
+  background: transparent;
+  color: var(--text);
+}
+
+.browse-hidden {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-end;
+  font-size: var(--t-label);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.browse-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.browse-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+}
+
+.browse-entry:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.browse-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-repo {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.browse-note {
+  margin: 0;
+  padding: var(--space-1) 0;
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.browse-connect {
+  align-self: flex-start;
+}
