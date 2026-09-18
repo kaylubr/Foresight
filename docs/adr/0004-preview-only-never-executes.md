@@ -7,4 +7,4 @@ The reason is that preview fidelity is only ever good enough to be *illustrative
 ## Consequences
 
 - No mutation of the original is possible through Foresight at all.
-- Because the user acts on a preview later, staleness is a real concern; the snapshot-fingerprint check and the `--local` hardlinks both assume the original is untouched by the tool.
+- Because the user acts on a preview later, staleness is a real concern; the snapshot-fingerprint check and the clone's hardlinks both assume the original is untouched by the tool.

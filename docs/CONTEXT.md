@@ -9,7 +9,7 @@ Running a submitted command inside a throwaway clone to observe its effect befor
 _Avoid_: Simulation, dry run, sandbox
 
 **Rehearsal clone**:
-The throwaway `git clone --local` a rehearsal runs in, discarded afterwards.
+The throwaway `git clone` a rehearsal runs in, discarded afterwards.
 _Avoid_: Sandbox, scratch repo
 
 **Mirror**:
