@@ -9,6 +9,10 @@ The git process that runs a submitted command is given a controlled environment:
 - The network denial and the process-group kill on timeout are Linux-specific; running on another platform is the trigger to revisit these decisions.
 - If the probe cannot confirm denial, previews are unavailable rather than degraded. A silent fallback to running *with* network access is the failure mode this decision exists to prevent.
 
+## Resolution
+
+Revisited when Foresight was made usable from Windows. The decision holds: the sandbox stays Linux-only, and the rest of the app is portable, so on another platform the graph and the read-only surfaces work while rehearsals are unavailable with a stated reason. What changed is only that the requirement is declared rather than left implicit. The revisit trigger is unchanged: actually needing to rehearse somewhere the sandbox cannot run.
+
 ## Considered Options
 
 - Inheriting the user's environment — rejected. It reopens the shell-out trapdoors that the parsed-argv model exists to close.
