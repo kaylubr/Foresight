@@ -2,8 +2,12 @@ export const STATUS_WORDS: Record<string, string> = {
   M: "modified",
   A: "added",
   D: "deleted",
+  R: "renamed",
+  C: "copied",
   T: "type changed",
-  U: "unmerged"
+  U: "unmerged",
+  "?": "untracked",
+  ".": "unchanged"
 };
 
 export const STATUS_LEGEND =

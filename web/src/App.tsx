@@ -5,20 +5,18 @@ import type {
   RepoConnectResult,
   StalenessResult
 } from "../../shared/types";
-import { api } from "./api";
 import brandUrl from "./assets/brand.svg";
 import AboutPage from "./components/AboutPage";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
-import OutcomePanel from "./components/OutcomePanel";
-import RepoBrowser from "./components/RepoBrowser";
+import PageLink from "./components/PageLink";
+import RepoBrowser from "./components/connect/RepoBrowser";
 import RepositoryPage from "./components/RepositoryPage";
-import { caveatCount, headLabel } from "./repoSummary";
-import { PageLink, ROUTE_PATHS, navigate, useRoute } from "./route";
-
-function describe(error: unknown): string {
-  return error instanceof Error ? error.message : "unexpected failure";
-}
+import OutcomePanel from "./components/outcome/OutcomePanel";
+import { api } from "./lib/api";
+import { errorMessage } from "./lib/errors";
+import { caveatCount, headLabel } from "./lib/repoSummary";
+import { navigate, ROUTE_PATHS, useRoute } from "./lib/route";
 
 type Activity = "connect" | "refresh" | "rehearse";
 
@@ -103,7 +101,7 @@ export default function App() {
       setStaleness(null);
       setBrowsing(false);
     } catch (caught) {
-      setError(describe(caught));
+      setError(errorMessage(caught));
     } finally {
       setActivity(null);
     }
@@ -154,7 +152,7 @@ export default function App() {
         setStaleness(await api.staleness(repo.path, result.originSnapshot.state));
       }
     } catch (caught) {
-      setError(describe(caught));
+      setError(errorMessage(caught));
     } finally {
       setActivity(null);
     }

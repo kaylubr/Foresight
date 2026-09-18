@@ -1,24 +1,10 @@
 import type { ReactNode } from "react";
-import type { ChangeSet } from "../../../shared/types";
-
-const STATUS_WORDS: Record<string, string> = {
-  M: "modified",
-  A: "added",
-  D: "deleted",
-  R: "renamed",
-  C: "copied",
-  T: "type changed",
-  U: "unmerged",
-  "?": "untracked",
-  ".": "unchanged"
-};
+import type { ChangeSet } from "../../../../shared/types";
+import { shortHash } from "../../lib/format";
+import { statusWord } from "../../lib/statusCodes";
 
 function word(status: string): string {
-  return STATUS_WORDS[status] ?? status;
-}
-
-function short(value: string | null): string {
-  return value ? value.slice(0, 7) : "none";
+  return statusWord(status) ?? status;
 }
 
 function Entry({
@@ -71,8 +57,8 @@ export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet }) {
   const worktreeMoved =
     changeSet.worktreeCounts.before !== changeSet.worktreeCounts.after || worktreeCount > 0;
 
-  const headBefore = short(head.commitBefore);
-  const headAfter = short(head.commitAfter);
+  const headBefore = shortHash(head.commitBefore, "none");
+  const headAfter = shortHash(head.commitAfter, "none");
 
   const entryCount =
     changeSet.refs.length + (headMoved ? 1 : 0) + stagedCount + worktreeCount + commitsMoved;
@@ -87,8 +73,8 @@ export default function ChangeSetView({ changeSet }: { changeSet: ChangeSet }) {
               <Entry
                 key={ref.name}
                 label={ref.name}
-                before={short(ref.before)}
-                after={ref.after ? short(ref.after) : "deleted"}
+                before={shortHash(ref.before, "none")}
+                after={ref.after ? shortHash(ref.after, "none") : "deleted"}
                 afterFaint={!ref.after}
               />
             ))}

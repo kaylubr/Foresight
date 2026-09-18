@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import type { RepoConnectResult } from "../../../shared/types";
-import { factRows, refGroups } from "../repoSummary";
-import { STATUS_LEGEND, statusWord } from "../statusCodes";
-import InfoTip from "./InfoTip";
+import type { RepoConnectResult } from "../../../../shared/types";
+import { factRows, refGroups } from "../../lib/repoSummary";
+import { STATUS_LEGEND, statusWord } from "../../lib/statusCodes";
+import InfoTip from "../InfoTip";
 
 function FactsTable({ children }: { children: ReactNode }) {
   return <div className="state-table">{children}</div>;

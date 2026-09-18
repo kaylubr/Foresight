@@ -1,4 +1,4 @@
-import type { RepoConnectResult } from "../../shared/types";
+import type { RepoConnectResult } from "../../../shared/types";
 
 export interface FidelityCaveat {
   id: string;

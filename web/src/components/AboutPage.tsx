@@ -1,4 +1,5 @@
-import { PageLink, ROUTE_PATHS } from "../route";
+import { ROUTE_PATHS } from "../lib/route";
+import PageLink from "./PageLink";
 
 export default function AboutPage() {
   return (

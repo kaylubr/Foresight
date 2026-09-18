@@ -6,7 +6,7 @@ import type {
   RepoConnectResult,
   StalenessResult,
   ToolErrorCause
-} from "../../shared/types";
+} from "../../../shared/types";
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(path, {

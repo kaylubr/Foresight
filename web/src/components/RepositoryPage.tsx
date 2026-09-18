@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import type { RepoConnectResult } from "../../../shared/types";
-import { PageLink, ROUTE_PATHS } from "../route";
-import { headLine } from "../repoSummary";
-import FidelityCaveats from "./FidelityCaveats";
+import { headLine } from "../lib/repoSummary";
+import { ROUTE_PATHS } from "../lib/route";
+import PageLink from "./PageLink";
+import FidelityCaveats from "./repository/FidelityCaveats";
 import InfoTip from "./InfoTip";
-import RepoFacts from "./RepoFacts";
+import RepoFacts from "./repository/RepoFacts";
 
 const PURPOSE = "Foresight reads this repository and never writes to it.";
 const CHANGE = "Disconnects this repository and returns you to the rehearsal screen.";

@@ -1,4 +1,4 @@
-import type { RefState, RepoConnectResult } from "../../shared/types";
+import type { RefState, RepoConnectResult } from "../../../shared/types";
 
 export function caveatCount(repo: RepoConnectResult): number {
   return [

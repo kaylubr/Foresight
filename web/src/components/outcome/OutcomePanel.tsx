@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import type { ChangeSet, RehearsalOutcome } from "../../../shared/types";
-import { TOOL_ERROR_LABELS } from "../api";
+import type { ChangeSet, RehearsalOutcome } from "../../../../shared/types";
+import { TOOL_ERROR_LABELS } from "../../lib/api";
+import { shortHash } from "../../lib/format";
 import ChangeSetView from "./ChangeSetView";
 
 const UNMERGED_PREVIEW = 5;
@@ -24,10 +25,6 @@ function plain(value: string): string {
   return value.replace(/`/g, "");
 }
 
-function short(value: string | null): string {
-  return value ? value.slice(0, 7) : "unknown";
-}
-
 function changeParts(changeSet: ChangeSet): string[] {
   const { head } = changeSet;
   const parts: string[] = [];
@@ -37,7 +34,7 @@ function changeParts(changeSet: ChangeSet): string[] {
     head.commitBefore !== head.commitAfter ||
     head.detachedBefore !== head.detachedAfter
   ) {
-    parts.push(`HEAD ${short(head.commitBefore)} \u2192 ${short(head.commitAfter)}`);
+    parts.push(`HEAD ${shortHash(head.commitBefore, "unknown")} \u2192 ${shortHash(head.commitAfter, "unknown")}`);
   }
   if (changeSet.refs.length > 0) {
     parts.push(`${changeSet.refs.length} ref${changeSet.refs.length === 1 ? "" : "s"} moved`);
@@ -66,7 +63,7 @@ function verdictParts(outcome: RehearsalOutcome): string[] {
     case "preview":
       return ["Nothing in the modelled state changed."];
     case "conflict-stop":
-      return [`Would stop at ${short(outcome.step)}.`];
+      return [`Would stop at ${shortHash(outcome.step, "unknown")}.`];
     case "pause-stop":
       return [`Would stop at an ${outcome.action} step.`];
     case "failure":
