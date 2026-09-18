@@ -75,3 +75,11 @@ _Avoid_: Interactive command
 **Refusal**:
 Foresight declining to rehearse a command before it runs, with a specific reason and the in-scope alternative.
 _Avoid_: Error, block, failure
+
+**Root**:
+A starting folder the repository browser offers: the home directory, the filesystem root, or a mounted volume.
+_Avoid_: Drive, mount, shortcut
+
+**Volume**:
+A mounted filesystem that appears under a conventional mount location, such as a drive under `/mnt` or a disk under `/Volumes`.
+_Avoid_: Drive, disk

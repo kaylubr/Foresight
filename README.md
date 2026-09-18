@@ -23,4 +23,4 @@ npm run dev
 
 ## Requirements
 
-Node 20 or newer. Rehearsal needs Linux or WSL, where the network-isolation sandbox can run; elsewhere the commit graph and the read-only surfaces still work.
+Node 20 or newer. Rehearsal needs Linux or WSL, where the network-isolation sandbox can run. The commit graph, the repository browser, and the rest of the read-only surfaces work anywhere, including macOS.

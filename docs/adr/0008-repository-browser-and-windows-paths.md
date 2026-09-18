@@ -6,15 +6,18 @@ The browser reads directories through `GET /api/browse` and the connect form ren
 
 The selection unit is a directory, not a repository. Marking a child as a repository is a hint, not a gate: connecting a subdirectory still resolves to the working copy's top level through `git rev-parse --show-toplevel`, which is existing behaviour and must keep working.
 
-A drive-letter path is translated onto its mount (`C:\Users\you\code` becomes `/mnt/c/Users/you/code`) inside `resolveRepoPath`, so connect, preview, and staleness accept it uniformly. The failure message still names the input **as typed**, so a translation that resolves nowhere is reported honestly rather than as a confusing mount path.
+The picker's roots come from probing the host's conventional mount locations (`/mnt`, `/media`, `/run/media`, `/Volumes`) and offering the ones that exist, so the same code shows drive letters on WSL and volumes on macOS without branching on `process.platform`. A mount location that is absent contributes nothing rather than erroring, and the WSL-internal `wsl` and `wslg` mounts are left out.
+
+A drive-letter path is translated onto its mount (`C:\Users\you\code` becomes `/mnt/c/Users/you/code`) inside `resolveRepoPath`, but only when that mount exists, so the rewrite applies on WSL and is skipped where `/mnt` is absent. The failure message still names the input **as typed**, so an input that resolves nowhere is reported honestly rather than as a confusing mount path.
 
 ## Consequences
 
 - The picker is inline, not a modal and not a route, matching the existing sections on the working surface.
 - A listing is capped, and truncation is reported rather than hidden, so a short list never claims to be complete when it is not.
 - Dotfolders are hidden by default and shown on request.
-- The picker starts from a roots list: the home directory, `/`, and each mounted drive, so a Windows-side repository is reachable without typing a prefix.
-- Translation is WSL-specific. On a host without the mount it fails to resolve and the error names the original input.
+- The picker starts from a roots list: the home directory, `/`, and each mounted volume found under a conventional mount location, so a repository on another volume is reachable without typing a prefix.
+- Translation is gated on the mount existing. On a host without the mount the input is used unchanged, and the error names it as typed.
+- macOS can browse and read repositories, because only the network-isolation sandbox is Linux-specific. Running the server natively on Windows is not supported.
 - UNC paths (`\\wsl$\...`, `\\wsl.localhost\...`) are not translated; the browser reaches those repositories instead.
 - This does not touch the sandbox decision in [0005](./0005-sanitized-children-no-network.md): rehearsal is still Linux-only.
 
@@ -25,3 +28,5 @@ A drive-letter path is translated onto its mount (`C:\Users\you\code` becomes `/
 - A modal picker was rejected: the app has no modals and avoids them, and an inline panel matches the existing layout.
 - A recent-repositories list alone was rejected: it does not help the first connection, and does not remove the typing for repositories outside the list.
 - Client-side path guessing was rejected: the browser cannot see the server's filesystem.
+- Branching on `process.platform` was rejected: it infers a layout from a host's identity rather than observing the host, cannot be exercised on a single machine without mocking, and guesses wrong when a host deviates from its platform default.
+- Parsing the OS mount table (`/proc/self/mountinfo`, or shelling out to `mount` on macOS) was rejected: it adds pseudo-filesystem filtering and two platform-specific parsers, and shelling out conflicts with the no-shell rule.
