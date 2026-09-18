@@ -2,7 +2,7 @@ import { chmodSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { browse, browseRoots, listDirectories, rootsFrom } from "../src/platform/fsBrowse";
+import { browse, listDirectories, rootsFrom, trailFor } from "../src/platform/fsBrowse";
 
 const created: string[] = [];
 
@@ -34,30 +34,42 @@ afterAll(() => {
   }
 });
 
-describe("browseRoots", () => {
-  it("offers the home directory and the filesystem root", async () => {
-    const paths = (await browseRoots()).map((entry) => entry.path);
+describe("browse", () => {
+  it("offers the home directory and the filesystem root when no target is given", async () => {
+    const listing = await browse(null);
+    expect(listing.path).toBeNull();
+    expect(listing.trail).toEqual([]);
+    const paths = listing.entries.map((entry) => entry.path);
     expect(paths).toContain(homedir());
     expect(paths).toContain("/");
   });
 
-  it("returns the roots when no target is given", async () => {
-    const listing = await browse(null);
-    expect(listing.path).toBeNull();
-    expect(listing.parent).toBeNull();
-    expect(listing.entries.map((entry) => entry.path)).toContain(homedir());
+  it("returns a trail from the roots screen down to the current folder", async () => {
+    const root = makeTree();
+    const listing = await browse(root);
+    expect(listing.trail[0]).toEqual({ label: "Roots", path: null });
+    expect(listing.trail[1].path).toBe("/");
+    expect(listing.trail[listing.trail.length - 1].path).toBe(root);
   });
 });
 
 describe("rootsFrom", () => {
-  it("always starts from the home directory and the filesystem root", async () => {
-    const paths = (await rootsFrom([], "/home/kyle")).map((entry) => entry.path);
-    expect(paths).toEqual(["/home/kyle", "/"]);
+  it("always starts from the home directory and the named filesystem root", async () => {
+    const roots = await rootsFrom([], "/home/kyle", "Filesystem");
+    expect(roots.map((entry) => entry.path)).toEqual(["/home/kyle", "/"]);
+    expect(roots.map((entry) => entry.name)).toEqual(["Home", "Filesystem"]);
+  });
+
+  it("names the filesystem root for the host", async () => {
+    const roots = await rootsFrom([], "/home/kyle", "WSL filesystem");
+    expect(roots[1].name).toBe("WSL filesystem");
   });
 
   it("offers a volume-shaped parent's children verbatim", async () => {
     const parent = makeMountParent("Backup", "C", "Macintosh HD");
-    const names = (await rootsFrom([{ path: parent }], "/home/kyle")).map((entry) => entry.name);
+    const names = (await rootsFrom([{ path: parent }], "/home/kyle", "Filesystem")).map(
+      (entry) => entry.name
+    );
     expect(names).toContain("Backup");
     expect(names).toContain("Macintosh HD");
     expect(names).toContain("C");
@@ -66,9 +78,9 @@ describe("rootsFrom", () => {
 
   it("labels single letters as drives when the parent asks for it", async () => {
     const parent = makeMountParent("c", "d");
-    const names = (await rootsFrom([{ path: parent, driveLabels: true }], "/home/kyle")).map(
-      (entry) => entry.name
-    );
+    const names = (
+      await rootsFrom([{ path: parent, driveLabels: true }], "/home/kyle", "Filesystem")
+    ).map((entry) => entry.name);
     expect(names).toContain("C:");
     expect(names).toContain("D:");
     expect(names).not.toContain("c");
@@ -78,17 +90,36 @@ describe("rootsFrom", () => {
     const parent = makeMountParent("c", "wsl", "wslg");
     const roots = await rootsFrom(
       [{ path: parent, driveLabels: true, hide: ["wsl", "wslg"] }],
-      "/home/kyle"
+      "/home/kyle",
+      "Filesystem"
     );
-    expect(roots.map((entry) => entry.name)).toEqual(["Home", "/", "C:"]);
+    expect(roots.map((entry) => entry.name)).toEqual(["Home", "Filesystem", "C:"]);
   });
 
   it("ignores a mount parent that does not exist", async () => {
     const parent = makeMountParent();
-    const paths = (await rootsFrom([{ path: join(parent, "absent") }], "/home/kyle")).map(
-      (entry) => entry.path
-    );
+    const paths = (
+      await rootsFrom([{ path: join(parent, "absent") }], "/home/kyle", "Filesystem")
+    ).map((entry) => entry.path);
     expect(paths).toEqual(["/home/kyle", "/"]);
+  });
+});
+
+describe("trailFor", () => {
+  it("starts at the roots screen and names the filesystem root", () => {
+    expect(trailFor("/home/kyle", "Filesystem")).toEqual([
+      { label: "Roots", path: null },
+      { label: "Filesystem", path: "/" },
+      { label: "home", path: "/home" },
+      { label: "kyle", path: "/home/kyle" }
+    ]);
+  });
+
+  it("stops at the filesystem root when it is the current folder", () => {
+    expect(trailFor("/", "WSL filesystem")).toEqual([
+      { label: "Roots", path: null },
+      { label: "WSL filesystem", path: "/" }
+    ]);
   });
 });
 
@@ -97,7 +128,6 @@ describe("listDirectories", () => {
     const root = makeTree();
     const listing = await listDirectories(root);
     expect(listing.path).toBe(root);
-    expect(listing.parent).toBe(tmpdir());
     expect(listing.truncated).toBe(false);
     expect(listing.entries.map((entry) => entry.name)).toEqual(["alpha", "beta", "repo"]);
     expect(listing.entries.find((entry) => entry.name === "repo")?.isRepo).toBe(true);
@@ -119,12 +149,6 @@ describe("listDirectories", () => {
     const listing = await listDirectories(root);
     expect(listing.truncated).toBe(true);
     expect(listing.entries).toHaveLength(500);
-  });
-
-  it("reports no parent at the filesystem root", async () => {
-    const listing = await listDirectories("/");
-    expect(listing.path).toBe("/");
-    expect(listing.parent).toBeNull();
   });
 
   it("fails loud on a directory it cannot read", async () => {

@@ -1,9 +1,10 @@
 import { readdir, stat } from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import type { BrowseEntry, BrowseResult } from "../../../shared/types";
+import { join, resolve } from "node:path";
+import type { BrowseEntry, BrowseResult, BrowseTrailEntry } from "../../../shared/types";
 import { pathExists } from "./fsutil";
+import { readFilesystemRootName } from "./host";
 
 const MAX_ENTRIES = 500;
 
@@ -11,6 +12,12 @@ interface MountParent {
   path: string;
   driveLabels?: boolean;
   hide?: string[];
+}
+
+interface BrowseListing {
+  path: string;
+  truncated: boolean;
+  entries: BrowseEntry[];
 }
 
 const MOUNT_PARENTS: MountParent[] = [
@@ -46,15 +53,14 @@ function driveLabel(name: string): string {
   return /^[a-z]$/i.test(name) ? `${name.toUpperCase()}:` : name;
 }
 
-function parentOf(path: string): string | null {
-  const parent = dirname(path);
-  return parent === path ? null : parent;
-}
-
-export async function rootsFrom(parents: MountParent[], home: string): Promise<BrowseEntry[]> {
+export async function rootsFrom(
+  parents: MountParent[],
+  home: string,
+  rootName: string
+): Promise<BrowseEntry[]> {
   const candidates: Array<{ name: string; path: string }> = [
     { name: "Home", path: home },
-    { name: "/", path: "/" }
+    { name: rootName, path: "/" }
   ];
   for (const parent of parents) {
     for (const name of await childDirectoryNames(parent.path)) {
@@ -79,8 +85,17 @@ export async function rootsFrom(parents: MountParent[], home: string): Promise<B
   return roots;
 }
 
-export async function browseRoots(): Promise<BrowseEntry[]> {
-  return rootsFrom(MOUNT_PARENTS, homedir());
+export function trailFor(path: string, rootName: string): BrowseTrailEntry[] {
+  const trail: BrowseTrailEntry[] = [
+    { label: "Roots", path: null },
+    { label: rootName, path: "/" }
+  ];
+  let current = "";
+  for (const segment of path.split("/").filter((part) => part.length > 0)) {
+    current = `${current}/${segment}`;
+    trail.push({ label: segment, path: current });
+  }
+  return trail;
 }
 
 async function directoryNames(dir: string, includeHidden: boolean): Promise<string[]> {
@@ -100,7 +115,7 @@ async function directoryNames(dir: string, includeHidden: boolean): Promise<stri
   return visible.sort((left, right) => left.localeCompare(right, undefined, { sensitivity: "base" }));
 }
 
-export async function listDirectories(dir: string, includeHidden = false): Promise<BrowseResult> {
+export async function listDirectories(dir: string, includeHidden = false): Promise<BrowseListing> {
   const path = resolve(dir);
   const names = await directoryNames(path, includeHidden);
   const truncated = names.length > MAX_ENTRIES;
@@ -110,12 +125,19 @@ export async function listDirectories(dir: string, includeHidden = false): Promi
       return { name, path: child, isRepo: await isRepository(child) };
     })
   );
-  return { path, parent: parentOf(path), truncated, entries };
+  return { path, truncated, entries };
 }
 
 export async function browse(target: string | null, includeHidden = false): Promise<BrowseResult> {
+  const rootName = await readFilesystemRootName();
   if (target === null || target.trim().length === 0) {
-    return { path: null, parent: null, truncated: false, entries: await browseRoots() };
+    return {
+      path: null,
+      truncated: false,
+      trail: [],
+      entries: await rootsFrom(MOUNT_PARENTS, homedir(), rootName)
+    };
   }
-  return listDirectories(target, includeHidden);
+  const listing = await listDirectories(target, includeHidden);
+  return { ...listing, trail: trailFor(listing.path, rootName) };
 }

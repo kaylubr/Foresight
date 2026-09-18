@@ -222,10 +222,15 @@ export interface BrowseEntry {
   isRepo: boolean;
 }
 
+export interface BrowseTrailEntry {
+  label: string;
+  path: string | null;
+}
+
 export interface BrowseResult {
   path: string | null;
-  parent: string | null;
   truncated: boolean;
+  trail: BrowseTrailEntry[];
   entries: BrowseEntry[];
 }
 
