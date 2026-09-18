@@ -11,6 +11,7 @@ import AboutPage from "./components/AboutPage";
 import CommitGraph from "./components/CommitGraph";
 import GuaranteesPage from "./components/GuaranteesPage";
 import OutcomePanel from "./components/OutcomePanel";
+import RepoBrowser from "./components/RepoBrowser";
 import RepositoryPage from "./components/RepositoryPage";
 import { caveatCount, headLabel } from "./repoSummary";
 import { PageLink, ROUTE_PATHS, navigate, useRoute } from "./route";
@@ -32,6 +33,7 @@ export default function App() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healthChecked, setHealthChecked] = useState(false);
+  const [browsing, setBrowsing] = useState(false);
   const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "failed">("idle");
   const copyTimer = useRef<number | null>(null);
   const route = useRoute();
@@ -90,21 +92,22 @@ export default function App() {
 
   const needsSequence = /^\s*git\s+rebase\b/.test(command) && /\s(-i|--interactive)\b/.test(command);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (target: string) => {
     setActivity("connect");
     setError(null);
     try {
-      const result = await api.connect(repoPath);
+      const result = await api.connect(target);
       setRepo(result);
       setRepoPath(result.path);
       setOutcome(null);
       setStaleness(null);
+      setBrowsing(false);
     } catch (caught) {
       setError(describe(caught));
     } finally {
       setActivity(null);
     }
-  }, [repoPath]);
+  }, []);
 
   const refreshState = useCallback(async () => {
     if (!repo) {
@@ -306,13 +309,13 @@ export default function App() {
                       <input
                         id="repo-path"
                         value={repoPath}
-                        placeholder="/home/you/code/project"
+                        placeholder={"C:\\Users\\you\\code\\project"}
                         autoComplete="off"
                         spellCheck={false}
                         onChange={(event) => setRepoPath(event.target.value)}
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
-                            void connect();
+                            void connect(repoPath);
                           }
                         }}
                       />
@@ -332,13 +335,45 @@ export default function App() {
                     </div>
                   </div>
                   <button
-                    onClick={() => void connect()}
+                    type="button"
+                    className="icon-button browse-open"
+                    onClick={() => setBrowsing((open) => !open)}
+                    aria-expanded={browsing}
+                    aria-label="Browse for a folder"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                    </svg>
+                    <span className="icon-tip" role="tooltip">
+                      Browse for a folder
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => void connect(repoPath)}
                     disabled={busy || repoPath.trim().length === 0}
                   >
                     Connect
                   </button>
                 </div>
                 {error ? <p className="error">{error}</p> : null}
+                {browsing ? (
+                  <RepoBrowser
+                    onChoose={(path) => {
+                      setRepoPath(path);
+                      void connect(path);
+                    }}
+                  />
+                ) : null}
                 <p className="muted">
                   New here?{" "}
                   <PageLink to={ROUTE_PATHS.about}>What Foresight is for</PageLink>.

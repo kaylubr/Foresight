@@ -641,6 +641,95 @@ a:hover {
   min-width: 0;
 }
 
+.repo-browser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.browse-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.browse-path {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.browse-tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.browse-hidden {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.browse-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 320px;
+  overflow-y: auto;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.browse-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+}
+
+.browse-entry:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.browse-name {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-repo {
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
+.browse-note {
+  margin: 0;
+  padding: var(--space-1) 0;
+  font-size: var(--t-label);
+  color: var(--text-muted);
+}
+
 .info {
   position: absolute;
   top: 50%;

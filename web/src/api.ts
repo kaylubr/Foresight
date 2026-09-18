@@ -1,4 +1,5 @@
 import type {
+  BrowseResult,
   HealthResult,
   ModelledState,
   RehearsalOutcome,
@@ -21,12 +22,33 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return payload as T;
 }
 
+async function get<T>(path: string): Promise<T> {
+  const response = await fetch(path);
+  const payload: unknown = await response.json();
+  if (!response.ok) {
+    const message = (payload as { error?: string }).error ?? "request failed";
+    throw new Error(message);
+  }
+  return payload as T;
+}
+
 export const api = {
   health: async (): Promise<HealthResult> => {
     const response = await fetch("/api/health");
     return (await response.json()) as HealthResult;
   },
   probe: (): Promise<HealthResult> => post<HealthResult>("/api/probe", {}),
+  browse: (path: string | null, hidden: boolean): Promise<BrowseResult> => {
+    const query = new URLSearchParams();
+    if (path !== null) {
+      query.set("path", path);
+    }
+    if (hidden) {
+      query.set("hidden", "1");
+    }
+    const search = query.toString();
+    return get<BrowseResult>(`/api/browse${search.length > 0 ? `?${search}` : ""}`);
+  },
   connect: (path: string): Promise<RepoConnectResult> => post<RepoConnectResult>("/api/connect", { path }),
   preview: (path: string, command: string, sequence: string | null): Promise<RehearsalOutcome> =>
     post<RehearsalOutcome>("/api/preview", { path, command, sequence }),
