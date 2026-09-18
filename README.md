@@ -18,8 +18,12 @@
 
 ```sh
 npm install
-npm run dev
+npm start
 ```
+
+That builds the frontend and serves it with the API at http://127.0.0.1:4317.
+
+To work on Foresight itself, `npm run dev` runs the frontend and the backend separately and prints both addresses.
 
 ## Requirements
 
