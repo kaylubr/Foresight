@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
-export type Route = "workbench" | "repository" | "guarantees" | "about";
+export type Route = "rehearsal" | "repository" | "guarantees" | "about";
 
 export const ROUTE_PATHS: Record<Route, string> = {
-  workbench: "/",
+  rehearsal: "/",
   repository: "/repository",
   guarantees: "/guarantees",
   about: "/about"
@@ -17,7 +17,7 @@ function parse(pathname: string): Route {
   if (path === ROUTE_PATHS.repository) {
     return "repository";
   }
-  return path === ROUTE_PATHS.about ? "about" : "workbench";
+  return path === ROUTE_PATHS.about ? "about" : "rehearsal";
 }
 
 export function navigate(path: string): void {

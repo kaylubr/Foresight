@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import type { RepoConnectResult } from "../../../shared/types";
+import InfoTip from "../components/InfoTip";
+import PageLink from "../components/PageLink";
+import FidelityCaveats from "../components/repository/FidelityCaveats";
+import RepoFacts from "../components/repository/RepoFacts";
 import { headLine } from "../lib/repoSummary";
 import { ROUTE_PATHS } from "../lib/route";
-import PageLink from "./PageLink";
-import FidelityCaveats from "./repository/FidelityCaveats";
-import InfoTip from "./InfoTip";
-import RepoFacts from "./repository/RepoFacts";
 
 const PURPOSE = "Foresight reads this repository and never writes to it.";
 const CHANGE = "Disconnects this repository and returns you to the rehearsal screen.";
@@ -32,7 +32,7 @@ export default function RepositoryPage({
       <section className="section">
         <p className="empty">
           No repository is connected.{" "}
-          <PageLink to={ROUTE_PATHS.workbench}>Connect one on the rehearsal screen</PageLink>.
+          <PageLink to={ROUTE_PATHS.rehearsal}>Connect one on the rehearsal screen</PageLink>.
         </p>
       </section>
     );
@@ -43,7 +43,7 @@ export default function RepositoryPage({
       <section className="repo-frame" aria-label="Repository facts">
         <div className="repo-frame-head">
           <h1 className="page-title">{repo.name}</h1>
-          <InfoTip label={`${PURPOSE} Path: ${repo.path}`} align="start">
+          <InfoTip label={`${PURPOSE} Path: ${repo.path}`} align="start" className="repo-info">
             <span className="repo-tip-path">{repo.path}</span>
             {PURPOSE}
           </InfoTip>
@@ -51,7 +51,9 @@ export default function RepositoryPage({
             <button className="quiet" onClick={onDisconnect} disabled={busy}>
               Change repository
             </button>
-            <InfoTip label={CHANGE}>{CHANGE}</InfoTip>
+            <InfoTip label={CHANGE} className="repo-info">
+              {CHANGE}
+            </InfoTip>
           </div>
         </div>
         <p className="repo-identity">{headLine(repo)}</p>

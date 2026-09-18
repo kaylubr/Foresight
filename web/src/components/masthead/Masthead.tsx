@@ -41,7 +41,7 @@ export default function Masthead({
           </PageLink>
         ) : null}
         <nav className="nav" aria-label="Pages">
-          <PageLink to={ROUTE_PATHS.workbench} current={route === "workbench"}>
+          <PageLink to={ROUTE_PATHS.rehearsal} current={route === "rehearsal"}>
             Rehearsal
           </PageLink>
           {repo ? (

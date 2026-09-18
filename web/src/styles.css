@@ -143,21 +143,21 @@ a:hover {
   padding: var(--space-9) var(--space-4) 72px;
 }
 
-.page.workbench {
+.page.rehearsal {
   min-height: 100dvh;
   padding-bottom: var(--space-9);
 }
 
-.workbench-controls {
+.rehearsal-controls {
   flex: none;
 }
 
-.workbench-controls > .section {
+.rehearsal-controls > .section {
   margin-top: var(--space-4);
   padding-top: 0;
 }
 
-.workbench-controls > .section:first-child {
+.rehearsal-controls > .section:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: 0;
@@ -807,7 +807,7 @@ a:hover {
   margin-top: var(--space-4);
 }
 
-.workbench-controls .actions {
+.rehearsal-controls .actions {
   margin-top: 0;
 }
 
@@ -1575,11 +1575,7 @@ details > summary:hover {
   flex: none;
 }
 
-.repo-info-tip {
-  right: 0;
-}
-
-.repo-info-start .repo-info-tip {
+.info-start .info-tip {
   left: 0;
   right: auto;
 }
